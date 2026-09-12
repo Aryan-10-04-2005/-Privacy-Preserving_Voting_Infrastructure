@@ -1,0 +1,13 @@
+{
+  "name": "dojo-privacy-voting-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Privacy-Preserving Voting Infrastructure Platform Monorepo",
+  "scripts": {
+    "api:dev": "npm --prefix apps/api run dev",
+    "api:start": "npm --prefix apps/api start",
+    "api:test": "npm --prefix apps/api run test:flow",
+    "web:dev": "npm --prefix apps/web run dev",
+    "web:build": "npm --prefix apps/web run build"
+  }
+}
