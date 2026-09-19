@@ -1,0 +1,311 @@
+{
+  "organizations": [
+    {
+      "id": "org-college-1",
+      "name": "State Institute of Technology",
+      "type": "COLLEGE",
+      "description": "Premier university testing campus student elections.",
+      "createdAt": 1788799826954
+    },
+    {
+      "id": "org-dao-1",
+      "name": "AetherDAO Governance",
+      "type": "DAO",
+      "description": "Decentralized autonomous organization managing protocol grants.",
+      "createdAt": 1788367826954
+    },
+    {
+      "id": "org-college-1789231836590",
+      "name": "Test University",
+      "type": "COLLEGE",
+      "description": "Automated test org",
+      "createdAt": 1789231836590
+    }
+  ],
+  "elections": [
+    {
+      "id": "elect-college-2026",
+      "organizationId": "org-college-1",
+      "title": "Student Body President Election 2026",
+      "description": "Anonymous, privacy-preserving election for Campus Student President.",
+      "status": "FINALIZED",
+      "candidates": [
+        {
+          "id": "cand-1",
+          "label": "Alex Rivera (Tech & Green Campus)"
+        },
+        {
+          "id": "cand-2",
+          "label": "Samantha Chen (Student Welfare)"
+        },
+        {
+          "id": "cand-3",
+          "label": "Marcus Vance (Open Science & Innovation)"
+        }
+      ],
+      "eligibilityConfig": {
+        "provider": "COLLEGE_EMAIL",
+        "settings": {
+          "allowedDomain": "college.edu",
+          "allowedStudentIds": [
+            "STU1001",
+            "STU1002",
+            "STU1003",
+            "STU1004",
+            "STU1005"
+          ]
+        }
+      },
+      "startTime": 1789228226954,
+      "endTime": 1789491026954,
+      "createdAt": 1789224626954,
+      "frozenAt": 1789231836711,
+      "finalizedAt": 1789231836743
+    },
+    {
+      "id": "elect-dao-2026",
+      "organizationId": "org-dao-1",
+      "title": "AIP-42: Q3 Treasury Allocation Grant",
+      "description": "Vote on allocating 500k MST tokens to privacy infrastructure tooling.",
+      "status": "ACTIVE",
+      "candidates": [
+        {
+          "id": "opt-yes",
+          "label": "Approve Grant (Option A)"
+        },
+        {
+          "id": "opt-no",
+          "label": "Reject Proposal (Option B)"
+        },
+        {
+          "id": "opt-abstain",
+          "label": "Abstain"
+        }
+      ],
+      "eligibilityConfig": {
+        "provider": "DAO_ALLOWLIST",
+        "settings": {
+          "minTokenBalance": 100,
+          "allowlistWallets": [
+            "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+          ]
+        }
+      },
+      "startTime": 1789224626954,
+      "endTime": 1789663826954,
+      "createdAt": 1789217426954
+    },
+    {
+      "id": "elect-college-1789231836606",
+      "organizationId": "org-college-1",
+      "title": "Test Election for API Suite",
+      "description": "Automated test election",
+      "status": "ACTIVE",
+      "candidates": [
+        {
+          "id": "cand-a",
+          "label": "Option A"
+        },
+        {
+          "id": "cand-b",
+          "label": "Option B"
+        }
+      ],
+      "eligibilityConfig": {
+        "provider": "COLLEGE_EMAIL",
+        "settings": {
+          "allowedDomain": "test.edu"
+        }
+      },
+      "startTime": 1789231836606,
+      "endTime": 1789318236606,
+      "createdAt": 1789231836606
+    }
+  ],
+  "credentials": [
+    {
+      "id": "did:dojo:vc:1baabd18d58ee38d",
+      "issuer": "did:dojo:platform-authority",
+      "subjectHash": "6c5d0ad822f7f1aa3b7c838ef245e8f189f726787069523983440962a680ec47",
+      "organizationId": "org-college-1",
+      "credentialType": "ELIGIBLE_VOTER_CREDENTIAL",
+      "commitmentHash": "9dc6cada1d22c578fb9662ba907302269dc20f4087bfe38680bad484c838944c",
+      "issuedAt": 1789231836624,
+      "expiresAt": 1791823836624,
+      "signature": "bac14d001b4dfa951de47615a95ca3bc18d19ffbb62bf599996fb0fd106ee07b"
+    },
+    {
+      "id": "did:dojo:vc:c38244be9fd96ba6",
+      "issuer": "did:dojo:platform-authority",
+      "subjectHash": "7eaadf1989ccf0de8d49bd96d97f3677db8342952910f4ac0bf91f6f5f34f679",
+      "organizationId": "org-dao-1",
+      "credentialType": "ELIGIBLE_VOTER_CREDENTIAL",
+      "commitmentHash": "3173ac82dd7e4759ffb98e9391634ccb8279e8b82f4c7d3abdfc13728e30b173",
+      "issuedAt": 1789231836673,
+      "expiresAt": 1791823836673,
+      "signature": "ae36bbe4fea1e104e61e7cc96c134fc9c7fe195d84a64d7678f59410f23dfc27"
+    }
+  ],
+  "nullifiers": [
+    {
+      "nullifierHash": "286f30a080c4add5a937d4142581b9ec124bdcb9fb8ad52ba5328869ffdda531",
+      "electionId": "elect-college-2026",
+      "usedAt": 1789231836666,
+      "blockNumber": 104287,
+      "txHash": "0xmst_2242c549a3e740d2ef4e9a36f3a4123f97ff8a2a7d491a08d1c35664227bdf6b"
+    },
+    {
+      "nullifierHash": "dff13ad948e0be00f89c8d79769cf01cd1b50c6b178faa2391362d622761ab7a",
+      "electionId": "elect-dao-2026",
+      "usedAt": 1789231836708,
+      "blockNumber": 104290,
+      "txHash": "0xmst_04611b3c8e6e8bb103eba45eea9a9ea6ffe7ca55b157f86ea908ec672928a5ce"
+    }
+  ],
+  "votes": [
+    {
+      "id": "vote-ref-b3ce5376aa88",
+      "electionId": "elect-college-2026",
+      "nullifierHash": "286f30a080c4add5a937d4142581b9ec124bdcb9fb8ad52ba5328869ffdda531",
+      "encryptedBallot": "enc_ballot_39dbc11f37494a3e15bc2bad2123156b",
+      "txHash": "0xmst_2242c549a3e740d2ef4e9a36f3a4123f97ff8a2a7d491a08d1c35664227bdf6b",
+      "blockNumber": 104287,
+      "timestamp": 1789231836667
+    },
+    {
+      "id": "vote-ref-cf4f20f80188",
+      "electionId": "elect-dao-2026",
+      "nullifierHash": "dff13ad948e0be00f89c8d79769cf01cd1b50c6b178faa2391362d622761ab7a",
+      "encryptedBallot": "enc_ballot_bd558b758f02c8dd4d6bfdfbacb1f8ee",
+      "txHash": "0xmst_04611b3c8e6e8bb103eba45eea9a9ea6ffe7ca55b157f86ea908ec672928a5ce",
+      "blockNumber": 104290,
+      "timestamp": 1789231836708
+    }
+  ],
+  "tallies": {
+    "elect-college-2026": {
+      "electionId": "elect-college-2026",
+      "totalVotesCasted": 1,
+      "validVotesCount": 1,
+      "candidateScores": {
+        "cand-1": 1,
+        "cand-2": 0,
+        "cand-3": 0
+      },
+      "zkTallyProof": "0xzk_tally_0fccaf8ae8334327fb8553279cafd655b2ae2bfe9da0eefb5f2f1cf4755289dd",
+      "finalizedAt": 1789231836743,
+      "mstBlockNumber": 104292,
+      "mstTxHash": "0xmst_134906bc7c2e56fe9c25061b7a3cf6cb97810909a2f8dac43be1c08d085bc39f"
+    }
+  },
+  "blockchainTxs": [
+    {
+      "txHash": "0xmst_474c5b6cb9d624a1db4872480221fef1fa5a32c86a982eaa31cab653c76f85b6",
+      "blockNumber": 104286,
+      "eventType": "ELECTION_CREATED_EVENT",
+      "payloadHash": "9b7cbca33fb0fb2e841fea6ed21d976e67ee312ff11d06df496464ec695aae6c",
+      "timestamp": 1789231836606
+    },
+    {
+      "txHash": "0xmst_2242c549a3e740d2ef4e9a36f3a4123f97ff8a2a7d491a08d1c35664227bdf6b",
+      "blockNumber": 104287,
+      "eventType": "VOTE_CAST_EVENT",
+      "payloadHash": "25315b29763c36e6f1791b4fb586bb2a94a317d5e6231dc719baf7f52ceac680",
+      "timestamp": 1789231836665
+    },
+    {
+      "txHash": "0xmst_04611b3c8e6e8bb103eba45eea9a9ea6ffe7ca55b157f86ea908ec672928a5ce",
+      "blockNumber": 104290,
+      "eventType": "VOTE_CAST_EVENT",
+      "payloadHash": "0900e5c74e937f0450afd5bc7386aa2dd97d96df7d509dfd26fd97946be71cc4",
+      "timestamp": 1789231836707
+    },
+    {
+      "txHash": "0xmst_134906bc7c2e56fe9c25061b7a3cf6cb97810909a2f8dac43be1c08d085bc39f",
+      "blockNumber": 104292,
+      "eventType": "ELECTION_FINALIZED_EVENT",
+      "payloadHash": "62e804060058b66b334ccdc75d2d2147243d6718bdbf5df798bd548b9c043dee",
+      "timestamp": 1789231836743
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit-seed-1",
+      "electionId": "elect-college-2026",
+      "type": "ELECTION_CREATED",
+      "details": "Election created with institutional email eligibility requirement.",
+      "timestamp": 1789224626954
+    },
+    {
+      "id": "audit-seed-2",
+      "electionId": "elect-dao-2026",
+      "type": "ELECTION_CREATED",
+      "details": "DAO Election created with wallet allowlist requirement.",
+      "timestamp": 1789217426954
+    },
+    {
+      "id": "audit-create-1789231836606",
+      "electionId": "elect-college-1789231836606",
+      "type": "ELECTION_CREATED",
+      "details": "Election \"Test Election for API Suite\" published with provider [COLLEGE_EMAIL]",
+      "timestamp": 1789231836606
+    },
+    {
+      "id": "audit-cred-1789231836625",
+      "electionId": "",
+      "type": "CREDENTIAL_ISSUED",
+      "details": "Issued Verifiable Credential [did:dojo:vc:1baabd18d58ee38d] for org [org-college-1] with commitment hash [9dc6cada1d...]",
+      "timestamp": 1789231836624
+    },
+    {
+      "id": "audit-null-1789231836666",
+      "electionId": "elect-college-2026",
+      "type": "NULLIFIER_REGISTERED",
+      "details": "Nullifier registered: 286f30a080c4...",
+      "timestamp": 1789231836666,
+      "txHash": "0xmst_2242c549a3e740d2ef4e9a36f3a4123f97ff8a2a7d491a08d1c35664227bdf6b"
+    },
+    {
+      "id": "audit-vote-1789231836667",
+      "electionId": "elect-college-2026",
+      "type": "VOTE_ACCEPTED",
+      "details": "Anonymous vote successfully accepted & committed to MST Blockchain [Tx: 0xmst_2242c549...]",
+      "timestamp": 1789231836667,
+      "txHash": "0xmst_2242c549a3e740d2ef4e9a36f3a4123f97ff8a2a7d491a08d1c35664227bdf6b"
+    },
+    {
+      "id": "audit-cred-1789231836674",
+      "electionId": "",
+      "type": "CREDENTIAL_ISSUED",
+      "details": "Issued Verifiable Credential [did:dojo:vc:c38244be9fd96ba6] for org [org-dao-1] with commitment hash [3173ac82dd...]",
+      "timestamp": 1789231836673
+    },
+    {
+      "id": "audit-null-1789231836708",
+      "electionId": "elect-dao-2026",
+      "type": "NULLIFIER_REGISTERED",
+      "details": "Nullifier registered: dff13ad948e0...",
+      "timestamp": 1789231836708,
+      "txHash": "0xmst_04611b3c8e6e8bb103eba45eea9a9ea6ffe7ca55b157f86ea908ec672928a5ce"
+    },
+    {
+      "id": "audit-vote-1789231836709",
+      "electionId": "elect-dao-2026",
+      "type": "VOTE_ACCEPTED",
+      "details": "Anonymous vote successfully accepted & committed to MST Blockchain [Tx: 0xmst_04611b3c...]",
+      "timestamp": 1789231836709,
+      "txHash": "0xmst_04611b3c8e6e8bb103eba45eea9a9ea6ffe7ca55b157f86ea908ec672928a5ce"
+    },
+    {
+      "id": "audit-tally-1789231836744",
+      "electionId": "elect-college-2026",
+      "type": "ELECTION_FINALIZED",
+      "details": "Election finalized with 1 valid votes. ZK Tally proof verified on MST Blockchain.",
+      "timestamp": 1789231836744,
+      "txHash": "0xmst_134906bc7c2e56fe9c25061b7a3cf6cb97810909a2f8dac43be1c08d085bc39f"
+    }
+  ]
+}
