@@ -12,6 +12,9 @@ async function runEndToEndVerification() {
   console.log('🧪 RUNNING END-TO-END PRIVACY-PRESERVING VOTING VERIFICATION');
   console.log('======================================================\n');
 
+  // Reset store to pristine seed data so test is 100% idempotent
+  store.resetToDefault();
+
   // 1. Fetch college election
   const elections = store.getElections();
   const collegeElection = elections.find((e) => e.organizationId === 'org-college-1');

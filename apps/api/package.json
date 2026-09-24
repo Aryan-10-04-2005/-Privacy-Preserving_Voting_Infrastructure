@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test:flow": "ts-node src/test-flow.ts"
+    "test:flow": "ts-node src/test-flow.ts",
+    "test:suite": "ts-node src/api-test-suite.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

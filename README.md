@@ -1,4 +1,4 @@
-﻿# 🛡️ Privacy-Preserving Voting Infrastructure
+# 🛡️ Privacy-Preserving Voting Infrastructure
 
 > A zero-knowledge-proof-based anonymous voting platform for **Colleges** and **DAOs**, built on the **MST Blockchain**.
 
@@ -84,14 +84,17 @@ npm run dev
 
 ## 🧪 Testing
 
+You can run tests from either the root directory or inside `apps/api`:
+
 ```bash
+# From workspace root:
+npm test                  # Full lifecycle integration test (idempotent)
+npm run api:test:suite    # Full 57-test API suite (requires server running)
+
+# Or from apps/api:
 cd apps/api
-
-# Full lifecycle integration test
-npm run test:flow
-
-# Exhaustive API test suite (57 tests)
-npx ts-node src/api-test-suite.ts
+npm run test:flow         # Full lifecycle integration test
+npm run test:suite        # Full 57-test API suite
 ```
 
 Expected output: `📊 TEST RESULTS: 57 PASSED / 0 FAILED / 57 TOTAL`
@@ -133,6 +136,7 @@ Base URL: `http://localhost:4000`
 | `POST` | `/api/proofs/generate` | Generate ZK proof |
 | `POST` | `/api/votes` | Submit anonymous ballot |
 | `GET`  | `/api/blockchain/ledger` | View MST blockchain ledger |
+| `POST` | `/api/reset` | Reset store to pristine seed data (demo/testing) |
 
 ---
 

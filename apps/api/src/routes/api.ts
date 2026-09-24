@@ -278,4 +278,24 @@ router.get('/blockchain/ledger', (req: Request, res: Response) => {
   });
 });
 
+// --- STORE RESET (FOR TESTING & DEMO ENVIRONMENT) ---
+
+router.post('/reset', (req: Request, res: Response) => {
+  try {
+    const data = store.resetToDefault();
+    res.json({ success: true, message: 'Store reset to default seed state', data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/store/reset', (req: Request, res: Response) => {
+  try {
+    const data = store.resetToDefault();
+    res.json({ success: true, message: 'Store reset to default seed state', data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

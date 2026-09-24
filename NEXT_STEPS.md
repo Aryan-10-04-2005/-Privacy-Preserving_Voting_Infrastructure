@@ -1,4 +1,4 @@
-﻿# 🗺️ Next Steps — Privacy-Preserving Voting Infrastructure
+# 🗺️ Next Steps — Privacy-Preserving Voting Infrastructure
 
 > This document outlines the recommended roadmap for taking the project from MVP to production.
 
@@ -176,6 +176,8 @@
 
 ## ✅ Definition of Done (Production Ready)
 
+- [x] End-to-end integration test (`npm run test:flow`) idempotent and reproducible
+- [x] Full 57-test API test suite (`npm run test:suite`) automated with store reset
 - [ ] All data persisted in PostgreSQL
 - [ ] Real ZK proofs generated and verified on-chain
 - [ ] Admin routes protected by JWT
@@ -187,4 +189,4 @@
 
 ---
 
-*Last updated: 2026-09-12*
+*Last updated: 2026-09-24*

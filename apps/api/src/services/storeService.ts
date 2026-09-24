@@ -25,7 +25,7 @@ interface DatabaseSchema {
 const DATA_DIR = path.join(__dirname, '../../data');
 const DB_FILE = path.join(DATA_DIR, 'store.json');
 
-const defaultData: DatabaseSchema = {
+const getDefaultData = (): DatabaseSchema => ({
   organizations: [
     {
       id: 'org-college-1',
@@ -114,7 +114,7 @@ const defaultData: DatabaseSchema = {
       timestamp: Date.now() - 7200000 * 2,
     },
   ],
-};
+});
 
 class StoreService {
   private data: DatabaseSchema;
@@ -139,13 +139,20 @@ class StoreService {
         console.error('Error reading store.json, using default data:', err);
       }
     }
-    this.saveData(defaultData);
-    return defaultData;
+    const fresh = getDefaultData();
+    this.saveData(fresh);
+    return fresh;
   }
 
   public saveData(customData?: DatabaseSchema) {
     const toSave = customData || this.data;
     fs.writeFileSync(DB_FILE, JSON.stringify(toSave, null, 2), 'utf-8');
+  }
+
+  public resetToDefault(): DatabaseSchema {
+    this.data = getDefaultData();
+    this.saveData(this.data);
+    return this.data;
   }
 
   // Organizations

@@ -7,6 +7,8 @@
     "api:dev": "npm --prefix apps/api run dev",
     "api:start": "npm --prefix apps/api start",
     "api:test": "npm --prefix apps/api run test:flow",
+    "api:test:suite": "npm --prefix apps/api run test:suite",
+    "test": "npm --prefix apps/api run test:flow",
     "web:dev": "npm --prefix apps/web run dev",
     "web:build": "npm --prefix apps/web run build"
   }

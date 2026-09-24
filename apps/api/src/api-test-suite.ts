@@ -49,6 +49,13 @@ async function runAll() {
   log('  🧪  PRIVACY-PRESERVING VOTING API — FULL TEST SUITE');
   log('═'.repeat(65));
 
+  // Ensure fresh seed state before running tests
+  try {
+    await apiPost('/api/reset', {});
+  } catch (err) {
+    // Will be caught by /health check below if server is unreachable
+  }
+
   // ── BLOCK 1: Health & Organizations ──────────────────────────────
   log('\n📋 BLOCK 1 — Health & Organizations\n');
 
