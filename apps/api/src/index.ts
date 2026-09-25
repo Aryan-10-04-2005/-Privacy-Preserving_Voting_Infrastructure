@@ -38,10 +38,17 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🚀 Dojo Privacy Voting API Server running on port ${PORT}`);
-  console.log(`📡 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🔗 REST Endpoint Root: http://localhost:${PORT}/api`);
-  console.log(`=======================================================`);
-});
+let server: any;
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🚀 Dojo Privacy Voting API Server running on port ${PORT}`);
+    console.log(`📡 Health Check: http://localhost:${PORT}/health`);
+    console.log(`🔗 REST Endpoint Root: http://localhost:${PORT}/api`);
+    console.log(`=======================================================`);
+  });
+}
+
+export { app, server };
+export default app;
+

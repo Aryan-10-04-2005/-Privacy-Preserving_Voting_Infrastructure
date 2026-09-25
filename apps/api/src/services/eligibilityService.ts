@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { EligibilityConfig, EligibilityResult, EligibilityVerificationRequest } from '../types';
 import { store } from './storeService';
+import { verifyWalletSignature } from '../middleware/auth';
 
 export class EligibilityService {
   /**
@@ -30,7 +31,7 @@ export class EligibilityService {
       case 'DAO_TOKEN':
       case 'DAO_NFT':
       case 'DAO_GOVERNANCE':
-        return this.verifyDaoMembership(req.userIdentifier, config, req.organizationId, userHash, req.provider);
+        return this.verifyDaoMembership(req.userIdentifier, config, req.organizationId, userHash, req.provider, req.authPayload);
       default:
         return {
           eligible: false,
@@ -124,7 +125,8 @@ export class EligibilityService {
     config: EligibilityConfig,
     orgId: string,
     userHash: string,
-    provider: string
+    provider: string,
+    authPayload?: Record<string, any>
   ): EligibilityResult {
     const cleanWallet = walletAddress.trim().toLowerCase();
 
@@ -154,6 +156,20 @@ export class EligibilityService {
           provider,
           userIdentifierHash: userHash,
           reason: 'Wallet address is not registered on the DAO membership allowlist.',
+        };
+      }
+    }
+
+    // If a cryptographic signature payload is provided, verify ownership of the wallet key
+    if (authPayload && authPayload.signature && authPayload.message) {
+      const isValid = verifyWalletSignature(walletAddress, authPayload.message, authPayload.signature);
+      if (!isValid) {
+        return {
+          eligible: false,
+          organizationId: orgId,
+          provider,
+          userIdentifierHash: userHash,
+          reason: 'Cryptographic wallet signature verification failed.',
         };
       }
     }

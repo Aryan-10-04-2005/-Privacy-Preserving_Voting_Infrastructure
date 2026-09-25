@@ -146,3 +146,20 @@ export interface AuditEvent {
   timestamp: number;
   txHash?: string;
 }
+
+export interface AdminUser {
+  username: string;
+  role: 'ADMIN' | 'ORGANIZER';
+}
+
+export interface DaoChallengeRequest {
+  walletAddress: string;
+  electionId: string;
+}
+
+export interface DaoChallengeResponse {
+  challengeMessage: string;
+  nonce: string;
+  expiresAt: number;
+}
+

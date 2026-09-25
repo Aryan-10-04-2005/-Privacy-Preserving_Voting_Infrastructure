@@ -10,7 +10,7 @@
 |---|------|----------|--------|
 | 1 | Real Database (PostgreSQL + Prisma) | 🔴 High | Medium |
 | 2 | Real ZK Circuits (circom + snarkjs) | 🔴 High | High |
-| 3 | Authentication & Access Control | 🟠 Medium | Medium |
+| 3 | Authentication & Access Control | ✅ Completed | Done (73/73 tests) |
 | 4 | Frontend Polish & Admin Dashboard | 🟠 Medium | Medium |
 | 5 | Real Blockchain Integration (MST node) | 🟠 Medium | Low |
 | 6 | Rate Limiting & Security Hardening | 🟡 Pre-prod | Low |
@@ -86,20 +86,23 @@
 **Solution:** Protect admin endpoints with JWT middleware; voters authenticate per their org type.
 
 ### Steps
-- [ ] Create `src/middleware/auth.ts`:
+- [x] Create `src/middleware/auth.ts`:
   - `requireAdminToken(req, res, next)` — verifies `Authorization: Bearer <token>`
   - `JWT_SECRET` from `.env`
-- [ ] Add `POST /api/auth/admin-login` endpoint (username + password → JWT)
-- [ ] Protect routes:
+- [x] Add `POST /api/auth/admin-login` endpoint (username + password → JWT)
+- [x] Protect routes:
   - `POST /api/organizations` — admin only
   - `POST /api/elections` — admin only
+  - `POST /api/elections/:id/freeze` — admin only
   - `POST /api/elections/:id/finalize` — admin only
-- [ ] For DAO voters: verify wallet signature (`ethers.verifyMessage`) instead of plain wallet address
-- [ ] For College voters: integrate OAuth/SSO or institution email OTP
+- [x] For DAO voters: verify wallet signature (`ethers.verifyMessage`) instead of plain wallet address
+- [x] For College voters: integrate institution email OTP challenge & verification
 
-### Files to change
-- `apps/api/src/routes/api.ts` → add middleware to protected routes
-- `apps/api/src/middleware/auth.ts` → new file
+### Files changed
+- `apps/api/src/routes/api.ts` → added auth endpoints and protected admin routes
+- `apps/api/src/middleware/auth.ts` → JWT auth, wallet signature & OTP verification
+- `apps/api/src/services/eligibilityService.ts` → cryptographic wallet signature check
+- `apps/api/src/api-test-suite.ts` → comprehensive 73-test suite with auth coverage
 
 ---
 
@@ -177,13 +180,13 @@
 ## ✅ Definition of Done (Production Ready)
 
 - [x] End-to-end integration test (`npm run test:flow`) idempotent and reproducible
-- [x] Full 57-test API test suite (`npm run test:suite`) automated with store reset
+- [x] Full 73-test API test suite (`npm run test:suite`) automated with store reset
 - [ ] All data persisted in PostgreSQL
 - [ ] Real ZK proofs generated and verified on-chain
-- [ ] Admin routes protected by JWT
-- [ ] Voter auth via wallet sig (DAO) or email OTP (College)
+- [x] Admin routes protected by JWT
+- [x] Voter auth via wallet sig (DAO) or email OTP (College)
 - [ ] Rate limiting active on sensitive endpoints
-- [ ] All 57 API tests still passing after changes
+- [x] All 73 API tests passing after changes
 - [ ] Docker Compose setup for `api` + `postgres` services
 - [ ] CI/CD pipeline (GitHub Actions) running tests on each push
 

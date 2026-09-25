@@ -204,12 +204,6 @@ class StoreService {
     this.saveData();
   }
 
-  public getCredentialBySubject(subjectHash: string, orgId: string): VerifiableCredential | undefined {
-    return this.data.credentials.find(
-      (c) => c.subjectHash === subjectHash && c.organizationId === orgId
-    );
-  }
-
   // Nullifiers
   public isNullifierUsed(nullifierHash: string, electionId: string): boolean {
     return this.data.nullifiers.some(

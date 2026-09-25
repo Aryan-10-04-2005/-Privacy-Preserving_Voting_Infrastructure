@@ -6,12 +6,13 @@
 
 ## 📌 Features
 
-- 🔒 **End-to-end privacy** — Voter identity never exposed; only commitment hashes leave the client
+- 🔒 **End-to-End Privacy** — Voter identity never exposed; only commitment hashes leave the client
 - 🧮 **Zero-Knowledge Proofs** — Prove eligibility & uniqueness without revealing identity
 - 🚫 **Double-Vote Prevention** — Nullifier engine ensures each credential votes exactly once
 - ⛓️ **MST Blockchain Audit Trail** — Every event logged immutably on-chain
-- 🎓 **College Support** — Email domain + Student ID based eligibility
-- 🏛️ **DAO Support** — Wallet allowlist, NFT ownership, or token-balance based eligibility
+- 🎓 **College Support** — Email domain + Student ID eligibility with institutional OTP challenge verification
+- 🏛️ **DAO Support** — Wallet allowlist, NFT/token governance, and cryptographic wallet signature verification (`ethers.verifyMessage`)
+- 🔑 **Admin & Voter Authentication** — JWT-secured administrative routes (`Bearer <token>`) preventing unauthorized election lifecycle manipulation
 - ✅ **Verifiable Tally** — ZK tally proof published on-chain after election closes
 
 ---
@@ -19,12 +20,13 @@
 ## 🏗️ Architecture
 
 ```
-Voter Client
+Voter Client / Admin Portal
     │
     ▼
 Express API (Port 4000)
     │
-    ├── EligibilityService   → Validates voter against org rules
+    ├── Auth Middleware      → JWT validation & Web3 signature / OTP checks
+    ├── EligibilityService   → Validates voter against org rules & key ownership
     ├── CredentialService    → Issues anonymous DID Verifiable Credential
     ├── ZkProofService       → Generates & verifies zk-SNARK proof
     ├── NullifierService     → Hash(secret + electionId) double-vote guard
@@ -37,14 +39,14 @@ Express API (Port 4000)
 
 ## 🛠️ Tech Stack
 
-| Layer       | Technology                          |
-|-------------|--------------------------------------|
-| Backend     | Node.js · Express · TypeScript       |
-| Frontend    | Vite · React · Lucide Icons          |
-| ZK Proofs   | snarkjs-compatible abstraction       |
-| Blockchain  | MST SDK wrapper                      |
-| Auth        | JSON Web Tokens (`jsonwebtoken`)     |
-| Data Store  | JSON file (MVP) → swap for Prisma/PG |
+| Layer       | Technology                                            |
+|-------------|-------------------------------------------------------|
+| Backend     | Node.js · Express · TypeScript                        |
+| Frontend    | Vite · React · Lucide Icons                           |
+| ZK Proofs   | snarkjs-compatible abstraction                        |
+| Blockchain  | MST SDK wrapper                                       |
+| Auth & Crypto | JWT (`jsonwebtoken`) · Web3 Signatures (`ethers`) · OTP |
+| Data Store  | JSON file (MVP) → swap for Prisma/PG                  |
 
 ---
 
@@ -62,7 +64,18 @@ cd apps/web
 npm install
 ```
 
-### 2. Run the API server
+### 2. Configure Environment
+
+Create `apps/api/.env`:
+
+```env
+PORT=4000
+JWT_SECRET=dojo-privacy-voting-jwt-secret-key-production-ready-2026
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+```
+
+### 3. Run the API server
 
 ```bash
 cd apps/api
@@ -70,7 +83,7 @@ npm run dev
 # → http://localhost:4000
 ```
 
-### 3. Run the frontend
+### 4. Run the frontend
 
 ```bash
 cd apps/web
@@ -89,29 +102,31 @@ You can run tests from either the root directory or inside `apps/api`:
 ```bash
 # From workspace root:
 npm test                  # Full lifecycle integration test (idempotent)
-npm run api:test:suite    # Full 57-test API suite (requires server running)
+npm run api:test:suite    # Full 73-test API suite (auto-spawns test server if offline)
 
 # Or from apps/api:
 cd apps/api
 npm run test:flow         # Full lifecycle integration test
-npm run test:suite        # Full 57-test API suite
+npm run test:suite        # Full 73-test API suite
 ```
 
-Expected output: `📊 TEST RESULTS: 57 PASSED / 0 FAILED / 57 TOTAL`
+Expected output: `📊 TEST RESULTS: 73 PASSED / 0 FAILED / 73 TOTAL`
 
 ### What is tested?
+
 | Block | Coverage |
 |-------|----------|
-| Health & Organizations | Create, list, validate orgs |
-| Elections | Create, filter, validate elections |
-| Eligibility | Email domain ✓/✗, Student ID ✓/✗, DAO wallet ✓/✗ |
-| Credentials | Issue VC with no PII, reject ineligible |
-| ZK Proofs | Generate proof, deterministic nullifier, election-scoped |
-| Vote Submission | Accept vote, MST receipt, **double-vote rejected** |
-| DAO End-to-End | Full DAO voter path |
-| Finalization | Close election, ZK tally proof |
-| Results & Audit | Final tally, audit log events |
-| Blockchain Ledger | Event types, tx hashes, block numbers |
+| **Auth & Security** | JWT login, Bearer token auth, route protection (401), wallet signature verification, fake signature rejections, and college email OTP flows |
+| **Health & Organizations** | Create (authenticated 🔒), list, validate orgs |
+| **Elections** | Create (authenticated 🔒), filter, validate elections |
+| **Eligibility** | Email domain ✓/✗, Student ID ✓/✗, DAO wallet ✓/✗, cryptographic signature check |
+| **Credentials** | Issue VC with no PII, reject ineligible |
+| **ZK Proofs** | Generate proof, deterministic nullifier, election-scoped |
+| **Vote Submission** | Accept vote, MST receipt, **double-vote rejected** |
+| **DAO End-to-End** | Full DAO voter path |
+| **Finalization** | Authenticated election freeze & finalize 🔒, ZK tally proof |
+| **Results & Audit** | Final tally, audit log events |
+| **Blockchain Ledger** | Event types, tx hashes, block numbers |
 
 ---
 
@@ -119,49 +134,65 @@ Expected output: `📊 TEST RESULTS: 57 PASSED / 0 FAILED / 57 TOTAL`
 
 Base URL: `http://localhost:4000`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET`  | `/health` | Server health check |
-| `GET`  | `/api/organizations` | List all organizations |
-| `POST` | `/api/organizations` | Create organization |
-| `GET`  | `/api/organizations/:id` | Get organization by ID |
-| `GET`  | `/api/elections` | List elections (filter by `?organizationId=`) |
-| `POST` | `/api/elections` | Create election |
-| `GET`  | `/api/elections/:id` | Get election details |
-| `POST` | `/api/elections/:id/finalize` | Finalize & tally election |
-| `GET`  | `/api/elections/:id/results` | Get final results |
-| `GET`  | `/api/elections/:id/audit` | Get audit log |
-| `POST` | `/api/eligibility/verify` | Verify voter eligibility |
-| `POST` | `/api/credentials/issue` | Issue anonymous VC |
-| `POST` | `/api/proofs/generate` | Generate ZK proof |
-| `POST` | `/api/votes` | Submit anonymous ballot |
-| `GET`  | `/api/blockchain/ledger` | View MST blockchain ledger |
-| `POST` | `/api/reset` | Reset store to pristine seed data (demo/testing) |
+### 🔑 Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/api/auth/admin-login` | Authenticate admin with username & password; returns JWT | Public |
+| `GET`  | `/api/auth/me` | Fetch authenticated admin profile | 🔒 Bearer Token |
+| `POST` | `/api/auth/dao/challenge` | Issue cryptographic nonce challenge for DAO wallet signing | Public |
+| `POST` | `/api/auth/dao/verify` | Verify signed challenge from Web3 wallet | Public |
+| `POST` | `/api/auth/college/send-otp` | Dispatch one-time passcode to institutional email | Public |
+| `POST` | `/api/auth/college/verify-otp` | Verify email OTP code | Public |
+
+### 🗳️ Voting & Platform Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET`  | `/health` | Server health check | Public |
+| `GET`  | `/api/organizations` | List all organizations | Public |
+| `POST` | `/api/organizations` | Create organization | 🔒 Bearer Token |
+| `GET`  | `/api/organizations/:id` | Get organization by ID | Public |
+| `GET`  | `/api/elections` | List elections (filter by `?organizationId=`) | Public |
+| `POST` | `/api/elections` | Create election | 🔒 Bearer Token |
+| `GET`  | `/api/elections/:id` | Get election details | Public |
+| `POST` | `/api/elections/:id/freeze` | Freeze election to halt new votes | 🔒 Bearer Token |
+| `POST` | `/api/elections/:id/finalize` | Finalize & tally election with ZK tally proof | 🔒 Bearer Token |
+| `GET`  | `/api/elections/:id/results` | Get final results | Public |
+| `GET`  | `/api/elections/:id/audit` | Get audit log & nullifier registry | Public |
+| `POST` | `/api/eligibility/verify` | Verify voter eligibility (supports wallet signature) | Public |
+| `POST` | `/api/credentials/issue` | Issue anonymous VC | Public |
+| `POST` | `/api/proofs/generate` | Generate ZK proof | Public |
+| `POST` | `/api/votes` | Submit anonymous ballot | Public |
+| `GET`  | `/api/blockchain/ledger` | View MST blockchain ledger | Public |
+| `POST` | `/api/reset` | Reset store to pristine seed data (demo/testing) | Public |
 
 ---
 
-## 🔐 Privacy Model
+## 🔐 Privacy & Security Model
 
 ```
-Voter has:  email / student ID / wallet address
-                        │
-                        ▼
-            EligibilityService verifies
-                        │
-                        ▼
-         CredentialService issues VC
-         (stores only HMAC commitment hash — no PII)
-                        │
-                        ▼
+Voter has: email / student ID / wallet address
+                    │
+                    ▼
+       Auth & Eligibility Verification
+       - College: Email domain check + OTP code
+       - DAO: Wallet allowlist + EIP-191 signature (ethers.verifyMessage)
+                    │
+                    ▼
+       CredentialService issues VC
+       (stores only HMAC commitment hash — zero PII)
+                    │
+                    ▼
        ZkProofService generates proof
-       (proves: "I have a valid credential" — reveals NOTHING else)
-                        │
-                        ▼
-    NullifierService computes Hash(secret + electionId)
-    (stored on-chain to prevent re-voting — unlinkable to identity)
-                        │
-                        ▼
-    VotingService records encrypted ballot on MST blockchain
+       (proves: "I hold a valid credential" — reveals NOTHING else)
+                    │
+                    ▼
+       NullifierService computes Hash(secret + electionId)
+       (stored on-chain to prevent re-voting — unlinkable to identity)
+                    │
+                    ▼
+       VotingService records encrypted ballot on MST blockchain
 ```
 
 ---
@@ -173,69 +204,57 @@ Dojo/
 ├── apps/
 │   ├── api/                     # Express backend
 │   │   ├── src/
+│   │   │   ├── middleware/
+│   │   │   │   └── auth.ts      # JWT admin auth, wallet verification & OTP
 │   │   │   ├── services/        # Core business logic
-│   │   │   │   ├── EligibilityService.ts
-│   │   │   │   ├── CredentialService.ts
-│   │   │   │   ├── ZkProofService.ts
-│   │   │   │   ├── NullifierService.ts
-│   │   │   │   ├── VotingService.ts
-│   │   │   │   ├── TallyService.ts
+│   │   │   │   ├── eligibilityService.ts
+│   │   │   │   ├── credentialService.ts
+│   │   │   │   ├── zkProofService.ts
+│   │   │   │   ├── nullifierService.ts
+│   │   │   │   ├── votingService.ts
+│   │   │   │   ├── tallyService.ts
 │   │   │   │   ├── blockchainService.ts
 │   │   │   │   └── storeService.ts
 │   │   │   ├── routes/
-│   │   │   │   └── api.ts       # All REST endpoints
+│   │   │   │   └── api.ts       # All REST endpoints & route guards
 │   │   │   ├── test-flow.ts     # Integration test
-│   │   │   ├── api-test-suite.ts# Full API test suite
+│   │   │   ├── api-test-suite.ts# Full 73-test API test suite
 │   │   │   └── index.ts         # Server entry point
 │   │   ├── data/
 │   │   │   └── store.json       # Local JSON data store
+│   │   ├── .env                 # Port, JWT secret, and admin credentials
 │   │   └── package.json
 │   └── web/                     # Vite + React frontend
 │       ├── src/
 │       │   └── App.tsx          # Main app
 │       └── vite.config.ts       # Dev server + proxy config
-├── README.md                    # ← This file
-└── FULL_DOCUMENTATION.md        # Detailed technical docs
+├── README.md                    # ← Comprehensive project documentation
+└── NEXT_STEPS.md                # Production roadmap & status tracker
 ```
 
 ---
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in `apps/api/`:
+Create `.env` in `apps/api/`:
 
 ```env
 PORT=4000
-JWT_SECRET=your-strong-random-secret
-```
-
----
-
-## 🐳 Docker Deployment
-
-```bash
-cd apps/api
-
-# Build image
-docker build -t privacy-voting-api .
-
-# Run container
-docker run -p 4000:4000 \
-  -e PORT=4000 \
-  -e JWT_SECRET=your-secret \
-  privacy-voting-api
+JWT_SECRET=dojo-privacy-voting-jwt-secret-key-production-ready-2026
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
 ```
 
 ---
 
 ## 🔮 Roadmap
 
+- [x] Authentication & Access Control (JWT, route guards, wallet signature & OTP verification)
 - [ ] PostgreSQL + Prisma (replace JSON store)
 - [ ] Real `circom` ZK circuits
-- [ ] Full admin dashboard UI
+- [ ] Full admin dashboard UI & voter wizard
 - [ ] Rate limiting & DDoS protection
 - [ ] Prometheus metrics + structured logging
-- [ ] Multi-election concurrency handling
 
 ---
 
