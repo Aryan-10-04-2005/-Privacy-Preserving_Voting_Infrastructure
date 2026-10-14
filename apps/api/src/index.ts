@@ -3,14 +3,59 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRouter from './routes/api';
 
+import helmet from 'helmet';
+import { globalRateLimiter } from './middleware/rateLimiter';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Enable CORS & JSON parsing
-app.use(cors());
-app.use(express.json());
+// HTTP Security Headers via Helmet
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// Configurable CORS Whitelist
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+    ];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. server-to-server, test runner) or permitted origins
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS origin ${origin} not permitted by policy`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-test-rate-limit', 'x-bypass-rate-limit'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '1mb' }));
+
+// Global Rate Limiting
+app.use(globalRateLimiter);
 
 // Logging Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {

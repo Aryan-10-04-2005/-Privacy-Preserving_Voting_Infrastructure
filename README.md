@@ -13,6 +13,7 @@
 - 🎓 **College Support** — Email domain + Student ID eligibility with institutional OTP challenge verification
 - 🏛️ **DAO Support** — Wallet allowlist, NFT/token governance, and cryptographic wallet signature verification (`ethers.verifyMessage`)
 - 🔑 **Admin & Voter Authentication** — JWT-secured administrative routes (`Bearer <token>`) preventing unauthorized election lifecycle manipulation
+- 🛡️ **Rate Limiting & Security Hardening** — Production-grade protection with Helmet HTTP security headers, CORS origin whitelisting, IP-based rate limiting, and `express-validator` input sanitization
 - ✅ **Verifiable Tally** — ZK tally proof published on-chain after election closes
 
 ---
@@ -25,6 +26,8 @@ Voter Client / Admin Portal
     ▼
 Express API (Port 4000)
     │
+    ├── Security Layer       → Helmet (CSP/HSTS) · CORS Whitelist · Rate Limiting
+    ├── Validation Layer     → express-validator input sanitization & XSS guard
     ├── Auth Middleware      → JWT validation & Web3 signature / OTP checks
     ├── EligibilityService   → Validates voter against org rules & key ownership
     ├── CredentialService    → Issues anonymous DID Verifiable Credential
@@ -46,6 +49,7 @@ Express API (Port 4000)
 | ZK Proofs   | snarkjs-compatible abstraction                        |
 | Blockchain  | MST SDK wrapper                                       |
 | Auth & Crypto | JWT (`jsonwebtoken`) · Web3 Signatures (`ethers`) · OTP |
+| Security    | `helmet` · `express-rate-limit` · `express-validator` · CORS whitelist |
 | Data Store  | JSON file (MVP) → swap for Prisma/PG                  |
 
 ---
@@ -102,15 +106,15 @@ You can run tests from either the root directory or inside `apps/api`:
 ```bash
 # From workspace root:
 npm test                  # Full lifecycle integration test (idempotent)
-npm run api:test:suite    # Full 73-test API suite (auto-spawns test server if offline)
+npm run api:test:suite    # Full 82-test API suite (auto-spawns test server if offline)
 
 # Or from apps/api:
 cd apps/api
 npm run test:flow         # Full lifecycle integration test
-npm run test:suite        # Full 73-test API suite
+npm run test:suite        # Full 82-test API suite
 ```
 
-Expected output: `📊 TEST RESULTS: 73 PASSED / 0 FAILED / 73 TOTAL`
+Expected output: `📊 TEST RESULTS: 82 PASSED / 0 FAILED / 82 TOTAL`
 
 ### What is tested?
 
@@ -127,6 +131,7 @@ Expected output: `📊 TEST RESULTS: 73 PASSED / 0 FAILED / 73 TOTAL`
 | **Finalization** | Authenticated election freeze & finalize 🔒, ZK tally proof |
 | **Results & Audit** | Final tally, audit log events |
 | **Blockchain Ledger** | Event types, tx hashes, block numbers |
+| **Security Hardening** | Helmet headers (`nosniff`, `SAMEORIGIN`), CORS origin whitelist & rejection, XSS sanitization, election validation, and 429 rate limiting |
 
 ---
 

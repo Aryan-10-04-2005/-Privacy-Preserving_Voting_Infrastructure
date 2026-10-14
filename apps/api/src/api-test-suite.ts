@@ -25,26 +25,40 @@ function log(msg: string) {
   console.log(msg);
 }
 
-async function apiGet(path: string, token?: string) {
+async function apiGet(path: string, token?: string, customHeaders?: Record<string, string>) {
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+  if (customHeaders) {
+    Object.assign(headers, customHeaders);
+  }
   const res = await fetch(`${API}${path}`, { headers });
-  return { status: res.status, body: await res.json() };
+  let body: any = {};
+  try {
+    body = await res.json();
+  } catch (err) {}
+  return { status: res.status, headers: res.headers, body };
 }
 
-async function apiPost(path: string, body: any, token?: string) {
+async function apiPost(path: string, body: any, token?: string, customHeaders?: Record<string, string>) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (customHeaders) {
+    Object.assign(headers, customHeaders);
   }
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
   });
-  return { status: res.status, body: await res.json() };
+  let resBody: any = {};
+  try {
+    resBody = await res.json();
+  } catch (err) {}
+  return { status: res.status, headers: res.headers, body: resBody };
 }
 
 function test(name: string, passed: boolean, data?: any, error?: string) {
@@ -488,6 +502,117 @@ async function runAll() {
   test('Ledger has ELECTION_CREATED_EVENT', r.body.data?.transactions?.some((t: any) => t.eventType === 'ELECTION_CREATED_EVENT'), r.body);
   test('Each ledger tx has a block number', r.body.data?.transactions?.every((t: any) => typeof t.blockNumber === 'number'), r.body);
   test('Each ledger tx hash starts with 0xmst_', r.body.data?.transactions?.every((t: any) => t.txHash?.startsWith('0xmst_')), r.body);
+
+  // ── BLOCK 11: Security Hardening (Helmet, Rate Limiting, Validation & CORS) ──
+  log('\n📋 BLOCK 11 — Security Hardening (Helmet, Rate Limiting, Input Sanitization & CORS)\n');
+
+  // 1. Helmet HTTP Security Headers
+  const healthResp = await apiGet('/health');
+  test(
+    'Helmet sets X-Content-Type-Options: nosniff header',
+    healthResp.headers.get('x-content-type-options') === 'nosniff',
+    healthResp.headers.get('x-content-type-options')
+  );
+  test(
+    'Helmet sets X-Frame-Options or CSP headers for clickjacking defense',
+    healthResp.headers.get('x-frame-options') === 'SAMEORIGIN' || !!healthResp.headers.get('content-security-policy'),
+    healthResp.headers.get('x-frame-options')
+  );
+
+  // 2. CORS Whitelist Policy
+  const corsAllowedResp = await apiGet('/health', undefined, { Origin: 'http://localhost:5173' });
+  test(
+    'CORS allows requests from permitted frontend origin (http://localhost:5173)',
+    corsAllowedResp.headers.get('access-control-allow-origin') === 'http://localhost:5173' ||
+      corsAllowedResp.headers.get('access-control-allow-origin') === '*',
+    corsAllowedResp.headers.get('access-control-allow-origin')
+  );
+
+  const corsBlockedResp = await apiGet('/health', undefined, { Origin: 'http://malicious-phishing-site.com' });
+  test(
+    'CORS policy rejects unauthorized cross-origin requests',
+    corsBlockedResp.status === 500 || !corsBlockedResp.headers.get('access-control-allow-origin'),
+    corsBlockedResp.body
+  );
+
+  // 3. Input Validation & XSS Sanitization via express-validator
+  r = await apiPost(
+    '/api/organizations',
+    {
+      name: '<script>alert("xss")</script>Security Org',
+      type: 'ENTERPRISE',
+      description: 'Sanitized <b>description</b>',
+    },
+    adminToken
+  );
+  test(
+    'express-validator sanitizes HTML/script tags from input strings (XSS prevention)',
+    r.status === 201 &&
+      r.body.data?.name?.includes('&lt;script&gt;') &&
+      !r.body.data?.name?.includes('<script>'),
+    r.body.data
+  );
+
+  r = await apiPost(
+    '/api/elections',
+    {
+      organizationId: 'org-college-1',
+      title: 'Bad Duration Election',
+      candidates: [{ id: 'c1', label: 'Candidate 1' }],
+      eligibilityConfig: { provider: 'COLLEGE_EMAIL' },
+      durationHours: -10,
+    },
+    adminToken
+  );
+  test('express-validator rejects invalid durationHours (negative integer)', r.status === 400, r.body);
+
+  r = await apiPost(
+    '/api/elections',
+    {
+      organizationId: 'org-college-1',
+      title: 'No Candidates Election',
+      candidates: [],
+      eligibilityConfig: { provider: 'COLLEGE_EMAIL' },
+    },
+    adminToken
+  );
+  test('express-validator rejects election with empty candidates array', r.status === 400, r.body);
+
+  // 4. Rate Limiting Protection (5 req/min threshold on /api/votes)
+  let rateLimitHit = false;
+  let rateLimitStatusCode = 0;
+  for (let i = 0; i < 6; i++) {
+    const burstResp = await apiPost(
+      '/api/votes',
+      { electionId: 'elect-college-2026' },
+      undefined,
+      { 'x-test-rate-limit': 'true' }
+    );
+    if (burstResp.status === 429) {
+      rateLimitHit = true;
+      rateLimitStatusCode = burstResp.status;
+      break;
+    }
+  }
+  test(
+    'Rate limiter triggers HTTP 429 on exceeding request threshold (/api/votes)',
+    rateLimitHit && rateLimitStatusCode === 429,
+    { rateLimitHit, rateLimitStatusCode }
+  );
+
+  // Reset rate limiters via /api/reset
+  await apiPost('/api/reset', {});
+  const postResetResp = await apiPost(
+    '/api/votes',
+    { electionId: 'elect-college-2026' },
+    undefined,
+    { 'x-test-rate-limit': 'true' }
+  );
+  test(
+    'Rate limiter correctly resets quota following /api/reset call',
+    postResetResp.status === 400,
+    postResetResp.body
+  );
 
   // ── FINAL SUMMARY ─────────────────────────────────────────────────
   log('\n' + '═'.repeat(65));

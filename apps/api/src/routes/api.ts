@@ -16,6 +16,27 @@ import {
   createCollegeOtp,
   verifyCollegeOtp,
 } from '../middleware/auth';
+import {
+  eligibilityRateLimiter,
+  voteRateLimiter,
+  credentialRateLimiter,
+  authRateLimiter,
+  resetAllRateLimiters,
+} from '../middleware/rateLimiter';
+import {
+  validateAdminLogin,
+  validateDaoChallenge,
+  validateDaoVerify,
+  validateCollegeSendOtp,
+  validateCollegeVerifyOtp,
+  validateCreateOrganization,
+  validateCreateElection,
+  validateVerifyEligibility,
+  validateIssueCredential,
+  validateGenerateProof,
+  validateSubmitVote,
+  validateIdParam,
+} from '../middleware/validation';
 
 const router = Router();
 
@@ -24,7 +45,7 @@ const router = Router();
 /**
  * Admin Login Endpoint - Exchanges username and password for a JWT token
  */
-router.post('/auth/admin-login', (req: Request, res: Response) => {
+router.post('/auth/admin-login', authRateLimiter, validateAdminLogin, (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
     const expectedUsername = process.env.ADMIN_USERNAME || 'admin';
@@ -65,7 +86,7 @@ router.get('/auth/me', requireAdminToken, (req: Request, res: Response) => {
 /**
  * Request a cryptographic challenge nonce for DAO wallet signing
  */
-router.post('/auth/dao/challenge', (req: Request, res: Response) => {
+router.post('/auth/dao/challenge', validateDaoChallenge, (req: Request, res: Response) => {
   try {
     const { walletAddress, electionId } = req.body;
     if (!walletAddress || !electionId) {
@@ -82,7 +103,7 @@ router.post('/auth/dao/challenge', (req: Request, res: Response) => {
 /**
  * Verify a signed challenge from a DAO wallet
  */
-router.post('/auth/dao/verify', (req: Request, res: Response) => {
+router.post('/auth/dao/verify', validateDaoVerify, (req: Request, res: Response) => {
   try {
     const { walletAddress, electionId, signature } = req.body;
     if (!walletAddress || !electionId || !signature) {
@@ -103,7 +124,7 @@ router.post('/auth/dao/verify', (req: Request, res: Response) => {
 /**
  * Send an OTP code to a college institutional email
  */
-router.post('/auth/college/send-otp', (req: Request, res: Response) => {
+router.post('/auth/college/send-otp', validateCollegeSendOtp, (req: Request, res: Response) => {
   try {
     const { email, electionId } = req.body;
     if (!email || !electionId) {
@@ -130,7 +151,7 @@ router.post('/auth/college/send-otp', (req: Request, res: Response) => {
 /**
  * Verify an institutional email OTP code
  */
-router.post('/auth/college/verify-otp', (req: Request, res: Response) => {
+router.post('/auth/college/verify-otp', validateCollegeVerifyOtp, (req: Request, res: Response) => {
   try {
     const { email, electionId, otp } = req.body;
     if (!email || !electionId || !otp) {
@@ -154,7 +175,7 @@ router.get('/organizations', (req: Request, res: Response) => {
   res.json({ success: true, data: store.getOrganizations() });
 });
 
-router.get('/organizations/:id', (req: Request, res: Response) => {
+router.get('/organizations/:id', validateIdParam, (req: Request, res: Response) => {
   const org = store.getOrganizationById(req.params.id);
   if (!org) {
     return res.status(404).json({ success: false, error: 'Organization not found' });
@@ -162,7 +183,7 @@ router.get('/organizations/:id', (req: Request, res: Response) => {
   res.json({ success: true, data: org });
 });
 
-router.post('/organizations', requireAdminToken, (req: Request, res: Response) => {
+router.post('/organizations', requireAdminToken, validateCreateOrganization, (req: Request, res: Response) => {
   try {
     const { name, type, description } = req.body;
     if (!name || !type) {
@@ -194,7 +215,7 @@ router.get('/elections', (req: Request, res: Response) => {
   res.json({ success: true, data: store.getElections() });
 });
 
-router.get('/elections/:id', (req: Request, res: Response) => {
+router.get('/elections/:id', validateIdParam, (req: Request, res: Response) => {
   const election = store.getElectionById(req.params.id);
   if (!election) {
     return res.status(404).json({ success: false, error: 'Election not found' });
@@ -202,7 +223,7 @@ router.get('/elections/:id', (req: Request, res: Response) => {
   res.json({ success: true, data: election });
 });
 
-router.post('/elections', requireAdminToken, (req: Request, res: Response) => {
+router.post('/elections', requireAdminToken, validateCreateElection, (req: Request, res: Response) => {
   try {
     const { organizationId, title, description, candidates, eligibilityConfig, durationHours } = req.body;
     if (!organizationId || !title || !candidates || !eligibilityConfig) {
@@ -251,7 +272,7 @@ router.post('/elections', requireAdminToken, (req: Request, res: Response) => {
 
 // --- ELIGIBILITY & CREDENTIALS ---
 
-router.post('/eligibility/verify', (req: Request, res: Response) => {
+router.post('/eligibility/verify', eligibilityRateLimiter, validateVerifyEligibility, (req: Request, res: Response) => {
   try {
     const { organizationId, electionId, provider, userIdentifier, authPayload } = req.body;
     if (!organizationId || !electionId || !provider || !userIdentifier) {
@@ -272,7 +293,7 @@ router.post('/eligibility/verify', (req: Request, res: Response) => {
   }
 });
 
-router.post('/credentials/issue', (req: Request, res: Response) => {
+router.post('/credentials/issue', credentialRateLimiter, validateIssueCredential, (req: Request, res: Response) => {
   try {
     const { eligibility, identitySecret } = req.body;
     if (!eligibility || !identitySecret) {
@@ -292,7 +313,7 @@ router.post('/credentials/issue', (req: Request, res: Response) => {
 
 // --- ZK PROOFS & VOTING ---
 
-router.post('/proofs/generate', (req: Request, res: Response) => {
+router.post('/proofs/generate', validateGenerateProof, (req: Request, res: Response) => {
   try {
     const { credential, identitySecret, electionId } = req.body;
     if (!credential || !identitySecret || !electionId) {
@@ -306,7 +327,7 @@ router.post('/proofs/generate', (req: Request, res: Response) => {
   }
 });
 
-router.post('/votes', (req: Request, res: Response) => {
+router.post('/votes', voteRateLimiter, validateSubmitVote, (req: Request, res: Response) => {
   try {
     const { electionId, zkProof, nullifierHash, encryptedBallot } = req.body;
     if (!electionId || !zkProof || !nullifierHash || !encryptedBallot) {
@@ -328,7 +349,7 @@ router.post('/votes', (req: Request, res: Response) => {
 
 // --- TALLY & FINALIZATION ---
 
-router.post('/elections/:id/freeze', requireAdminToken, (req: Request, res: Response) => {
+router.post('/elections/:id/freeze', requireAdminToken, validateIdParam, (req: Request, res: Response) => {
   try {
     const election = store.getElectionById(req.params.id);
     if (!election) {
@@ -350,7 +371,7 @@ router.post('/elections/:id/freeze', requireAdminToken, (req: Request, res: Resp
   }
 });
 
-router.post('/elections/:id/finalize', requireAdminToken, (req: Request, res: Response) => {
+router.post('/elections/:id/finalize', requireAdminToken, validateIdParam, (req: Request, res: Response) => {
   try {
     const tally = tallyService.finalizeElection(req.params.id);
     res.json({ success: true, data: tally });
@@ -359,7 +380,7 @@ router.post('/elections/:id/finalize', requireAdminToken, (req: Request, res: Re
   }
 });
 
-router.get('/elections/:id/results', (req: Request, res: Response) => {
+router.get('/elections/:id/results', validateIdParam, (req: Request, res: Response) => {
   try {
     const election = store.getElectionById(req.params.id);
     if (!election) {
@@ -379,7 +400,7 @@ router.get('/elections/:id/results', (req: Request, res: Response) => {
   }
 });
 
-router.get('/elections/:id/audit', (req: Request, res: Response) => {
+router.get('/elections/:id/audit', validateIdParam, (req: Request, res: Response) => {
   try {
     const electionId = req.params.id;
     const election = store.getElectionById(electionId);
@@ -420,6 +441,7 @@ router.get('/blockchain/ledger', (req: Request, res: Response) => {
 
 router.post('/reset', (req: Request, res: Response) => {
   try {
+    resetAllRateLimiters();
     const data = store.resetToDefault();
     res.json({ success: true, message: 'Store reset to default seed state', data });
   } catch (err: any) {

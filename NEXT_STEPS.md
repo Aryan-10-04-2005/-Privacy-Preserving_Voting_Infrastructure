@@ -13,7 +13,7 @@
 | 3 | Authentication & Access Control | ✅ Completed | Done (73/73 tests) |
 | 4 | Frontend Polish & Admin Dashboard | 🟠 Medium | Medium |
 | 5 | Real Blockchain Integration (MST node) | 🟠 Medium | Low |
-| 6 | Rate Limiting & Security Hardening | 🟡 Pre-prod | Low |
+| 6 | Rate Limiting & Security Hardening | ✅ Completed | Done (82/82 tests) |
 
 ---
 
@@ -159,37 +159,45 @@
 **Solution:** Add standard production-grade security layers.
 
 ### Steps
-- [ ] Install packages:
+- [x] Install packages:
   ```bash
   npm install helmet express-rate-limit express-validator
   ```
-- [ ] Add `helmet()` middleware in `index.ts` (HTTP security headers)
-- [ ] Add rate limiters:
+- [x] Add `helmet()` middleware in `index.ts` (HTTP security headers)
+- [x] Add rate limiters:
   - `/api/eligibility/verify` — 10 req/min per IP
   - `/api/votes` — 5 req/min per IP
   - `/api/credentials/issue` — 10 req/min per IP
-- [ ] Add `express-validator` input sanitization on all POST routes
-- [ ] Add CORS whitelist (restrict to known frontend domains)
+  - `/api/auth/admin-login` — 10 req/15min per IP
+  - Global API limiter — 200 req/min per IP
+- [x] Add `express-validator` input sanitization on all POST routes (XSS & injection defense)
+- [x] Add CORS whitelist (restrict to known frontend domains)
+- [x] Automated test coverage in `api-test-suite.ts` (Block 11 with 9 new security tests)
 
-### Files to change
-- `apps/api/src/index.ts` → add helmet, rate limiter
-- `apps/api/src/routes/api.ts` → add validators
+### Files changed
+- `apps/api/src/index.ts` → added helmet, CORS whitelist, global rate limiter
+- `apps/api/src/routes/api.ts` → attached validators & endpoint-specific rate limiters
+- `apps/api/src/middleware/rateLimiter.ts` → rate limiting logic with memory stores & store reset
+- `apps/api/src/middleware/validation.ts` → input validation & sanitization rules
+- `apps/api/src/api-test-suite.ts` → added BLOCK 11 covering security headers, CORS, validation, and rate limits
 
 ---
 
 ## ✅ Definition of Done (Production Ready)
 
 - [x] End-to-end integration test (`npm run test:flow`) idempotent and reproducible
-- [x] Full 73-test API test suite (`npm run test:suite`) automated with store reset
+- [x] Full 82-test API test suite (`npm run test:suite`) automated with store reset
 - [ ] All data persisted in PostgreSQL
 - [ ] Real ZK proofs generated and verified on-chain
 - [x] Admin routes protected by JWT
 - [x] Voter auth via wallet sig (DAO) or email OTP (College)
-- [ ] Rate limiting active on sensitive endpoints
-- [x] All 73 API tests passing after changes
+- [x] Rate limiting active on sensitive endpoints
+- [x] Security headers (Helmet) & CORS whitelist active
+- [x] Input sanitization and validation across all POST routes
+- [x] All 82 API tests passing after changes
 - [ ] Docker Compose setup for `api` + `postgres` services
 - [ ] CI/CD pipeline (GitHub Actions) running tests on each push
 
 ---
 
-*Last updated: 2026-09-24*
+*Last updated: 2026-10-14*
