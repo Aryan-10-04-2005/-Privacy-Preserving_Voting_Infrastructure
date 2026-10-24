@@ -15,6 +15,7 @@ import {
   verifyDaoChallenge,
   createCollegeOtp,
   verifyCollegeOtp,
+  resetAuthStore,
 } from '../middleware/auth';
 import {
   eligibilityRateLimiter,
@@ -39,6 +40,16 @@ import {
 } from '../middleware/validation';
 
 const router = Router();
+
+// --- SYSTEM HEALTH CHECK ---
+router.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ONLINE',
+    system: 'Privacy-Preserving Voting Infrastructure Platform API',
+    blockchain: 'MST Blockchain SDK Network Integrated',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // --- AUTHENTICATION & ACCESS CONTROL ---
 
@@ -442,6 +453,7 @@ router.get('/blockchain/ledger', (req: Request, res: Response) => {
 router.post('/reset', (req: Request, res: Response) => {
   try {
     resetAllRateLimiters();
+    resetAuthStore();
     const data = store.resetToDefault();
     res.json({ success: true, message: 'Store reset to default seed state', data });
   } catch (err: any) {

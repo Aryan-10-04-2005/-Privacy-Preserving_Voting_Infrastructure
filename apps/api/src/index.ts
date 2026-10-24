@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Enable reverse proxy trust (for proxies/load balancers & accurate rate limiting)
+app.set('trust proxy', 1);
+
 // HTTP Security Headers via Helmet
 app.use(
   helmet({
@@ -78,6 +81,9 @@ app.use('/api', apiRouter);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.message && err.message.includes('CORS origin')) {
+    return res.status(403).json({ success: false, error: err.message });
+  }
   console.error('Unhandled Error:', err);
   res.status(500).json({ success: false, error: err.message || 'Internal Server Error' });
 });

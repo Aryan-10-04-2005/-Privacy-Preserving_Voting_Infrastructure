@@ -15,7 +15,7 @@ export class VotingService {
       throw new Error(`Election [${payload.electionId}] not found.`);
     }
 
-    if (election.status !== 'ACTIVE' && election.status !== 'FROZEN') {
+    if (election.status !== 'ACTIVE') {
       throw new Error(`Voting is not active for election [${payload.electionId}]. Current status: ${election.status}`);
     }
 

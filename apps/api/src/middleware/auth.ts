@@ -26,6 +26,15 @@ const activeChallenges = new Map<string, StoredChallenge>();
 const activeOtps = new Map<string, StoredOtp>();
 
 /**
+ * Reset all in-memory auth challenges and OTP stores.
+ * Useful for test suites and testing environment resets.
+ */
+export function resetAuthStore(): void {
+  activeChallenges.clear();
+  activeOtps.clear();
+}
+
+/**
  * Middleware requiring a valid Admin JWT token in Authorization: Bearer <token>
  */
 export function requireAdminToken(req: Request, res: Response, next: NextFunction) {

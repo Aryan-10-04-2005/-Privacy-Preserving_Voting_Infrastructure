@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import rateLimit, { MemoryStore } from 'express-rate-limit';
 
 const eligibilityStore = new MemoryStore();
@@ -92,7 +92,7 @@ export const credentialRateLimiter = createLimiter(
  */
 export const authRateLimiter = createLimiter(
   authStore,
-  10,
+  parseInt(process.env.RATE_LIMIT_AUTH || '10', 10),
   15 * 60 * 1000,
   'Too many login attempts. Please wait 15 minutes before trying again.'
 );

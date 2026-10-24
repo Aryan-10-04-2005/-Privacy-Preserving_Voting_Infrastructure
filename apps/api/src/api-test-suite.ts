@@ -531,7 +531,7 @@ async function runAll() {
   const corsBlockedResp = await apiGet('/health', undefined, { Origin: 'http://malicious-phishing-site.com' });
   test(
     'CORS policy rejects unauthorized cross-origin requests',
-    corsBlockedResp.status === 500 || !corsBlockedResp.headers.get('access-control-allow-origin'),
+    corsBlockedResp.status === 403 || corsBlockedResp.status === 500 || !corsBlockedResp.headers.get('access-control-allow-origin'),
     corsBlockedResp.body
   );
 

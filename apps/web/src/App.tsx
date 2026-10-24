@@ -20,7 +20,9 @@ import {
   Eye,
   ExternalLink,
   ChevronRight,
-  Fingerprint
+  Fingerprint,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 interface Organization {
@@ -123,6 +125,12 @@ export default function App() {
   const [voterError, setVoterError] = useState<string>('');
 
   // Admin Flow State
+  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('adminToken') || '');
+  const [adminUsername, setAdminUsername] = useState<string>('admin');
+  const [adminPassword, setAdminPassword] = useState<string>('admin123');
+  const [adminError, setAdminError] = useState<string>('');
+  const [adminSuccess, setAdminSuccess] = useState<string>('');
+
   const [newOrgName, setNewOrgName] = useState<string>('');
   const [newOrgType, setNewOrgType] = useState<string>('COLLEGE');
   const [newOrgDesc, setNewOrgDesc] = useState<string>('');
@@ -361,14 +369,58 @@ export default function App() {
   };
 
   // ADMIN ACTIONS
+  const handleAdminLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAdminError('');
+    setAdminSuccess('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: adminUsername,
+          password: adminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data?.token) {
+        setAdminToken(data.data.token);
+        localStorage.setItem('adminToken', data.data.token);
+        setAdminSuccess('Authenticated successfully as Admin!');
+      } else {
+        setAdminError(data.error || 'Admin login failed');
+      }
+    } catch (err: any) {
+      setAdminError(err.message || 'Network error during login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setAdminToken('');
+    localStorage.removeItem('adminToken');
+    setAdminSuccess('Logged out successfully');
+  };
+
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newOrgName) return;
+    if (!adminToken) {
+      setAdminError('Admin authentication required. Please log in first.');
+      return;
+    }
+    setAdminError('');
+    setAdminSuccess('');
     setLoading(true);
     try {
       const res = await fetch('/api/organizations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({
           name: newOrgName,
           type: newOrgType,
@@ -376,19 +428,30 @@ export default function App() {
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setNewOrgName('');
         setNewOrgDesc('');
+        setAdminSuccess(`Organization "${data.data.name}" created successfully!`);
         fetchInitialData();
-        alert('Organization Created Successfully!');
+      } else {
+        setAdminError(data.error || 'Failed to create organization');
       }
-    } catch (err) {}
-    setLoading(false);
+    } catch (err: any) {
+      setAdminError(err.message || 'Server error creating organization');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreateElection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newElectionTitle || !newElectionOrgId) return;
+    if (!adminToken) {
+      setAdminError('Admin authentication required. Please log in first.');
+      return;
+    }
+    setAdminError('');
+    setAdminSuccess('');
 
     const candidates = candidateInputs
       .split('\n')
@@ -398,6 +461,11 @@ export default function App() {
         label: line.trim(),
       }));
 
+    if (candidates.length === 0) {
+      setAdminError('At least one candidate option is required.');
+      return;
+    }
+
     const settings: any = {};
     if (newElectionProvider === 'COLLEGE_EMAIL') settings.allowedDomain = newElectionDomain;
 
@@ -405,7 +473,10 @@ export default function App() {
     try {
       const res = await fetch('/api/elections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({
           organizationId: newElectionOrgId,
           title: newElectionTitle,
@@ -418,29 +489,48 @@ export default function App() {
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setNewElectionTitle('');
+        setAdminSuccess(`Election "${data.data.title}" published to MST Blockchain!`);
         fetchInitialData();
-        alert('Election Published to MST Blockchain!');
+      } else {
+        setAdminError(data.error || 'Failed to publish election');
       }
-    } catch (err) {}
-    setLoading(false);
+    } catch (err: any) {
+      setAdminError(err.message || 'Server error creating election');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFinalizeElection = async (electionId: string) => {
+    if (!adminToken) {
+      setAdminError('Admin authentication required. Please log in first.');
+      return;
+    }
+    setAdminError('');
+    setAdminSuccess('');
     setLoading(true);
     try {
       const res = await fetch(`/api/elections/${electionId}/finalize`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+        },
       });
       const data = await res.json();
-      if (data.success) {
-        alert('Election Finalized! ZK Tally Proof verified on MST Blockchain.');
+      if (res.ok && data.success) {
+        setAdminSuccess('Election Finalized! ZK Tally Proof verified on MST Blockchain.');
         fetchInitialData();
         fetchAuditData(electionId);
+      } else {
+        setAdminError(data.error || 'Failed to finalize election');
       }
-    } catch (err) {}
-    setLoading(false);
+    } catch (err: any) {
+      setAdminError(err.message || 'Server error finalizing election');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRunSandbox = async () => {
@@ -977,6 +1067,98 @@ export default function App() {
         {/* -------------------- ADMIN DASHBOARD TAB -------------------- */}
         {activeTab === 'admin' && (
           <div className="space-y-8">
+            {/* Admin Authentication Card */}
+            <div className="glass-panel rounded-2xl p-6 border-indigo-500/20 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-indigo-400" />
+                  <h3 className="font-bold text-slate-100">Administrator Access & Authorization</h3>
+                </div>
+                {adminToken ? (
+                  <div className="flex items-center space-x-3">
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+                      ● Authenticated ({adminUsername})
+                    </span>
+                    <button
+                      onClick={handleAdminLogout}
+                      className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center space-x-1.5 transition-all"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
+                    Admin Auth Required
+                  </span>
+                )}
+              </div>
+
+              {adminError && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                  <span>{adminError}</span>
+                </div>
+              )}
+
+              {adminSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                  <span>{adminSuccess}</span>
+                </div>
+              )}
+
+              {!adminToken ? (
+                <form onSubmit={handleAdminLogin} className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
+                  <div>
+                    <label className="block text-slate-400 font-semibold mb-1">Username</label>
+                    <input
+                      type="text"
+                      value={adminUsername}
+                      onChange={(e) => setAdminUsername(e.target.value)}
+                      placeholder="admin"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 font-semibold mb-1">Password</label>
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      placeholder="admin123"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span>Login</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAdminUsername('admin');
+                        setAdminPassword('admin123');
+                        handleAdminLogin();
+                      }}
+                      className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold py-2 px-3 rounded-lg text-xs border border-cyan-500/30 transition-all"
+                    >
+                      ⚡ 1-Click Demo
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <p className="text-xs text-slate-400">
+                  You are authenticated with full administrative permissions to create organizations, publish new voting initiatives to the MST Blockchain, and trigger zero-knowledge election finalization.
+                </p>
+              )}
+            </div>
+
             {/* Create Organization Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="glass-panel rounded-2xl p-6 space-y-4">

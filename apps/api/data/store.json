@@ -5,14 +5,14 @@
       "name": "State Institute of Technology",
       "type": "COLLEGE",
       "description": "Premier university testing campus student elections.",
-      "createdAt": 1791557032657
+      "createdAt": 1792419794941
     },
     {
       "id": "org-dao-1",
       "name": "AetherDAO Governance",
       "type": "DAO",
       "description": "Decentralized autonomous organization managing protocol grants.",
-      "createdAt": 1791125032657
+      "createdAt": 1791987794941
     }
   ],
   "elections": [
@@ -49,9 +49,9 @@
           ]
         }
       },
-      "startTime": 1791985432657,
-      "endTime": 1792248232657,
-      "createdAt": 1791981832657
+      "startTime": 1792848194941,
+      "endTime": 1793110994941,
+      "createdAt": 1792844594941
     },
     {
       "id": "elect-dao-2026",
@@ -85,9 +85,9 @@
           ]
         }
       },
-      "startTime": 1791981832657,
-      "endTime": 1792421032657,
-      "createdAt": 1791974632657
+      "startTime": 1792844594941,
+      "endTime": 1793283794941,
+      "createdAt": 1792837394941
     }
   ],
   "credentials": [],
@@ -101,14 +101,14 @@
       "electionId": "elect-college-2026",
       "type": "ELECTION_CREATED",
       "details": "Election created with institutional email eligibility requirement.",
-      "timestamp": 1791981832657
+      "timestamp": 1792844594941
     },
     {
       "id": "audit-seed-2",
       "electionId": "elect-dao-2026",
       "type": "ELECTION_CREATED",
       "details": "DAO Election created with wallet allowlist requirement.",
-      "timestamp": 1791974632657
+      "timestamp": 1792837394941
     }
   ]
 }
