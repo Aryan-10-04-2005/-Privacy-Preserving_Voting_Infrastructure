@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Shield,
   Key,
@@ -22,8 +22,21 @@ import {
   ChevronRight,
   Fingerprint,
   LogIn,
-  LogOut
+  LogOut,
+  ArrowRight,
+  ChevronDown,
+  Globe,
+  Lock as LockIcon,
+  Github,
+  Heart,
+  Info,
+  HelpCircle,
+  ArrowUp,
+  Menu,
+  X,
 } from 'lucide-react';
+
+// ── Interfaces ────────────────────────────────────────────────────────────
 
 interface Organization {
   id: string;
@@ -103,8 +116,75 @@ interface TallyResult {
   mstTxHash: string;
 }
 
+// ── Tooltip Component ─────────────────────────────────────────────────────
+
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  return (
+    <span className="tooltip-wrapper" tabIndex={0} aria-label={text}>
+      {children}
+      <span className="tooltip-content" role="tooltip">{text}</span>
+    </span>
+  );
+}
+
+// ── Section Reveal Hook ───────────────────────────────────────────────────
+
+function useRevealOnScroll() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          node.classList.add('visible');
+          obs.unobserve(node);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRevealOnScroll();
+  return (
+    <div ref={ref} className={`reveal-section ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// ── Back to Top Button ────────────────────────────────────────────────────
+
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  if (!show) return null;
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Back to top"
+      className="fixed bottom-6 right-6 z-50 p-3 rounded-xl bg-slate-800/90 border border-slate-700 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 shadow-lg transition-all hover:transform hover:-translate-y-1"
+    >
+      <ArrowUp className="h-5 w-5" />
+    </button>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'voter' | 'admin' | 'audit' | 'api'>('voter');
+  const [activeTab, setActiveTab] = useState<'landing' | 'voter' | 'admin' | 'audit' | 'api'>('landing');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // State
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -220,6 +300,24 @@ export default function App() {
       }
     }
   }, [selectedElectionId, elections]);
+
+  // Keyboard shortcut: press 1-5 for tabs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (e.altKey) {
+        switch (e.key) {
+          case '1': setActiveTab('landing'); e.preventDefault(); break;
+          case '2': setActiveTab('voter'); e.preventDefault(); break;
+          case '3': setActiveTab('admin'); e.preventDefault(); break;
+          case '4': setActiveTab('audit'); e.preventDefault(); break;
+          case '5': setActiveTab('api'); e.preventDefault(); break;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // VOTER ACTIONS
   const handleVerifyEligibility = async () => {
@@ -545,13 +643,19 @@ export default function App() {
 
   const currentElection = elections.find((e) => e.id === selectedElectionId);
 
+  const navigateToVoter = () => { setActiveTab('voter'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const navigateToAdmin = () => { setActiveTab('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const navigateToAudit = () => { setActiveTab('audit'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  // ── RENDER ──────────────────────────────────────────────────────────────
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header Banner */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+      {/* ──────── HEADER ──────── */}
+      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('landing')}>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20 animate-pulse-glow">
               <div className="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Shield className="h-5 w-5 text-cyan-400" />
               </div>
@@ -559,11 +663,11 @@ export default function App() {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="font-extrabold text-lg tracking-tight gradient-text">DOJO</h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono">
-                  v1.0.0 Zero-Knowledge Infrastructure
+                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono hidden sm:inline-block">
+                  v1.0.0 ZK Infrastructure
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Privacy-Preserving Voting Platform • Express & Next.js</p>
+              <p className="text-xs text-slate-400 hidden md:block">Privacy-Preserving Voting Platform</p>
             </div>
           </div>
 
@@ -573,15 +677,31 @@ export default function App() {
               <span>{apiStatus}</span>
             </div>
 
-            {/* Navigation Tabs */}
-            <nav className="flex space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            {/* Mobile menu toggle */}
+            <button
+              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-200"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800" role="navigation" aria-label="Main Navigation">
+              <button
+                onClick={() => setActiveTab('landing')}
+                className={`nav-tab ${activeTab === 'landing' ? 'active-voter' : ''}`}
+                aria-current={activeTab === 'landing' ? 'page' : undefined}
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span>Home</span>
+              </button>
+
               <button
                 onClick={() => setActiveTab('voter')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'voter'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`nav-tab ${activeTab === 'voter' ? 'active-voter' : ''}`}
+                aria-current={activeTab === 'voter' ? 'page' : undefined}
               >
                 <Vote className="h-3.5 w-3.5" />
                 <span>Voter Flow</span>
@@ -589,101 +709,297 @@ export default function App() {
 
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'admin'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`nav-tab ${activeTab === 'admin' ? 'active-admin' : ''}`}
+                aria-current={activeTab === 'admin' ? 'page' : undefined}
               >
                 <Shield className="h-3.5 w-3.5" />
-                <span>Admin Dashboard</span>
+                <span>Admin</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('audit')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'audit'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`nav-tab ${activeTab === 'audit' ? 'active-audit' : ''}`}
+                aria-current={activeTab === 'audit' ? 'page' : undefined}
               >
                 <Search className="h-3.5 w-3.5" />
-                <span>Public Audit Explorer</span>
+                <span>Audit</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('api')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'api'
-                    ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
+                className={`nav-tab ${activeTab === 'api' ? 'active-api' : ''}`}
+                aria-current={activeTab === 'api' ? 'page' : undefined}
               >
                 <Terminal className="h-3.5 w-3.5" />
-                <span>API Sandbox</span>
+                <span>API</span>
               </button>
             </nav>
           </div>
         </div>
+
+        {/* Mobile Nav Dropdown */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden border-t border-slate-800 px-4 py-3 space-y-1 animate-slide-up" role="navigation" aria-label="Mobile Navigation">
+            {[
+              { id: 'landing' as const, label: 'Home', icon: Globe },
+              { id: 'voter' as const, label: 'Voter Flow', icon: Vote },
+              { id: 'admin' as const, label: 'Admin Dashboard', icon: Shield },
+              { id: 'audit' as const, label: 'Public Audit', icon: Search },
+              { id: 'api' as const, label: 'API Sandbox', icon: Terminal },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === item.id
+                      ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Election Selector Bar */}
-        <div className="glass-panel rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 border-cyan-500/20">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-              <Building className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Target Election</span>
-              <div className="flex items-center space-x-2">
-                <select
-                  value={selectedElectionId}
-                  onChange={(e) => {
-                    setSelectedElectionId(e.target.value);
-                    setVoterStep(1);
-                    setEligibilityResult(null);
-                    setCredential(null);
-                    setZkProof(null);
-                    setVoteReceipt(null);
-                  }}
-                  className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-500 font-semibold"
-                >
-                  {elections.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      [{e.status}] {e.title}
-                    </option>
-                  ))}
-                </select>
+      {/* ──────── MAIN CONTENT ──────── */}
+      <main id="main-content" className="flex-1" role="main">
+
+        {/* ════════════════════════ LANDING PAGE ════════════════════════ */}
+        {activeTab === 'landing' && (
+          <div className="hero-gradient-bg">
+            {/* Hero Section */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-24 md:pb-28" aria-labelledby="hero-heading">
+              <div className="text-center max-w-3xl mx-auto">
+                <div className="hero-badge mb-6">
+                  <Sparkles className="h-4 w-4 text-cyan-400" />
+                  <span>Zero-Knowledge Privacy Infrastructure</span>
+                </div>
+
+                <h2 id="hero-heading" className="hero-title mb-6">
+                  <span className="text-slate-100">Truly Anonymous</span>
+                  <br />
+                  <span className="gradient-text">Voting for Everyone</span>
+                </h2>
+
+                <p className="hero-subtitle mx-auto mb-10">
+                  Conduct secure, verifiable elections where no voter identity is ever exposed.
+                  Powered by zero-knowledge proofs, verifiable credentials, and blockchain
+                  immutability.
+                </p>
+
+                <div className="hero-actions flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button
+                    onClick={navigateToVoter}
+                    className="gradient-btn text-white font-bold py-3.5 px-8 rounded-xl flex items-center space-x-2 shadow-lg shadow-cyan-500/20 text-sm"
+                  >
+                    <Vote className="h-5 w-5" />
+                    <span>Start Voting</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={navigateToAudit}
+                    className="bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-semibold py-3.5 px-8 rounded-xl flex items-center space-x-2 text-sm transition-all hover:border-slate-600"
+                  >
+                    <Search className="h-5 w-5 text-purple-400" />
+                    <span>Audit Elections</span>
+                  </button>
+                </div>
               </div>
-            </div>
+
+              {/* Stats Row */}
+              <RevealSection className="mt-16">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                  <div className="stat-card">
+                    <div className="stat-value gradient-text">{organizations.length}</div>
+                    <div className="stat-label">Organizations</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value gradient-text">{elections.length}</div>
+                    <div className="stat-label">Elections</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value gradient-text">{ledgerTxs.length}</div>
+                    <div className="stat-label">Ledger Events</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value gradient-text">100%</div>
+                    <div className="stat-label">Privacy</div>
+                  </div>
+                </div>
+              </RevealSection>
+            </section>
+
+            {/* Features Grid */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20" aria-labelledby="features-heading">
+              <RevealSection>
+                <div className="text-center mb-12">
+                  <h2 id="features-heading" className="text-2xl md:text-3xl font-extrabold text-slate-100 mb-3">
+                    How It Works
+                  </h2>
+                  <p className="text-slate-400 max-w-lg mx-auto">
+                    A 5-step cryptographic pipeline ensures your vote is counted but your identity is never revealed.
+                  </p>
+                </div>
+              </RevealSection>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  {
+                    icon: UserCheck,
+                    title: 'Verify Eligibility',
+                    desc: 'Prove your membership through an organization adapter without revealing personal information to the voting system.',
+                    color: 'text-cyan-400',
+                    bg: 'bg-cyan-500/10 border-cyan-500/30',
+                  },
+                  {
+                    icon: Key,
+                    title: 'Issue Credential',
+                    desc: 'Receive a verifiable anonymous credential — a cryptographic membership card that shields your identity.',
+                    color: 'text-emerald-400',
+                    bg: 'bg-emerald-500/10 border-emerald-500/30',
+                  },
+                  {
+                    icon: Cpu,
+                    title: 'Generate ZK Proof',
+                    desc: 'Synthesize a zero-knowledge SNARK proof and compute a one-time nullifier to prevent double-voting.',
+                    color: 'text-purple-400',
+                    bg: 'bg-purple-500/10 border-purple-500/30',
+                  },
+                  {
+                    icon: Lock,
+                    title: 'Encrypted Ballot',
+                    desc: 'Your ballot is homomorphically encrypted and submitted with your ZK proof to the MST Blockchain.',
+                    color: 'text-pink-400',
+                    bg: 'bg-pink-500/10 border-pink-500/30',
+                  },
+                  {
+                    icon: Database,
+                    title: 'Immutable Ledger',
+                    desc: 'Every vote is recorded on a tamper-proof blockchain. All transactions are publicly auditable.',
+                    color: 'text-amber-400',
+                    bg: 'bg-amber-500/10 border-amber-500/30',
+                  },
+                  {
+                    icon: Search,
+                    title: 'Public Verification',
+                    desc: 'Anyone can verify election integrity through the public audit explorer — zero trust assumptions required.',
+                    color: 'text-indigo-400',
+                    bg: 'bg-indigo-500/10 border-indigo-500/30',
+                  },
+                ].map((feature, i) => {
+                  const Icon = feature.icon;
+                  return (
+                    <RevealSection key={feature.title}>
+                      <div className={`feature-card anim-delay-${i + 1}`}>
+                        <div className={`feature-icon-wrapper ${feature.bg} border relative z-10`}>
+                          <Icon className={`h-5 w-5 ${feature.color}`} />
+                        </div>
+                        <h3 className="font-bold text-slate-100 mb-2 relative z-10">{feature.title}</h3>
+                        <p className="text-sm text-slate-400 leading-relaxed relative z-10">{feature.desc}</p>
+                      </div>
+                    </RevealSection>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* CTA Section */}
+            <RevealSection>
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20" aria-labelledby="cta-heading">
+                <div className="glass-panel rounded-3xl p-10 md:p-14 text-center border-cyan-500/20">
+                  <h2 id="cta-heading" className="text-2xl md:text-3xl font-extrabold text-slate-100 mb-4">
+                    Ready to Cast Your Anonymous Vote?
+                  </h2>
+                  <p className="text-slate-400 max-w-lg mx-auto mb-8">
+                    Experience the full zero-knowledge voting pipeline — from identity verification to blockchain receipt.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                      onClick={navigateToVoter}
+                      className="gradient-btn text-white font-bold py-3.5 px-10 rounded-xl flex items-center space-x-2 shadow-lg shadow-cyan-500/20"
+                    >
+                      <Zap className="h-5 w-5" />
+                      <span>Launch Voter Flow</span>
+                    </button>
+                    <button
+                      onClick={navigateToAdmin}
+                      className="bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-semibold py-3.5 px-10 rounded-xl flex items-center space-x-2 transition-all"
+                    >
+                      <Shield className="h-5 w-5 text-indigo-400" />
+                      <span>Admin Dashboard</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </RevealSection>
           </div>
+        )}
 
-          {currentElection && (
-            <div className="flex items-center space-x-3 text-xs">
-              <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-mono">
-                Provider: <strong className="text-cyan-400">{currentElection.eligibilityConfig.provider}</strong>
-              </span>
-              <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-mono">
-                Options: <strong className="text-purple-400">{currentElection.candidates.length}</strong>
-              </span>
-              <span
-                className={`px-2.5 py-1 rounded-full font-semibold ${
-                  currentElection.status === 'ACTIVE'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                }`}
-              >
-                ● {currentElection.status}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* -------------------- VOTER FLOW TAB -------------------- */}
+        {/* ════════════════════════ VOTER FLOW ════════════════════════ */}
         {activeTab === 'voter' && (
-          <div className="space-y-6">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
+            {/* Election Selector Bar */}
+            <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-cyan-500/20">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Building className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Target Election</span>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedElectionId}
+                      onChange={(e) => {
+                        setSelectedElectionId(e.target.value);
+                        setVoterStep(1);
+                        setEligibilityResult(null);
+                        setCredential(null);
+                        setZkProof(null);
+                        setVoteReceipt(null);
+                      }}
+                      className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-500 font-semibold"
+                      aria-label="Select election"
+                    >
+                      {elections.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          [{e.status}] {e.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {currentElection && (
+                <div className="flex items-center space-x-3 text-xs flex-wrap gap-y-2">
+                  <Tooltip text="The eligibility verification method used for this election">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-mono cursor-help">
+                      Provider: <strong className="text-cyan-400">{currentElection.eligibilityConfig.provider}</strong>
+                    </span>
+                  </Tooltip>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-mono">
+                    Options: <strong className="text-purple-400">{currentElection.candidates.length}</strong>
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 rounded-full font-semibold ${
+                      currentElection.status === 'ACTIVE'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                    }`}
+                  >
+                    ● {currentElection.status}
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Step Stepper Header */}
             <div className="glass-panel rounded-2xl p-6">
               <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center space-x-2">
@@ -694,33 +1010,43 @@ export default function App() {
                 Follow the 5-step privacy pipeline: Prove eligibility anonymously without disclosing identity, PII, or student records.
               </p>
 
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
+              <div className="flex items-center gap-1 text-center text-xs">
                 {[
                   { step: 1, label: 'Identity Auth', icon: UserCheck },
                   { step: 2, label: 'Verifiable Credential', icon: Key },
                   { step: 3, label: 'ZK Proof & Nullifier', icon: Cpu },
                   { step: 4, label: 'Encrypted Ballot', icon: Lock },
                   { step: 5, label: 'Receipt & Ledger', icon: FileCheck },
-                ].map((s) => {
+                ].map((s, idx) => {
                   const Icon = s.icon;
                   const isActive = voterStep === s.step;
                   const isDone = voterStep > s.step;
 
                   return (
-                    <div
-                      key={s.step}
-                      className={`p-3 rounded-xl border flex flex-col items-center transition-all ${
-                        isActive
-                          ? 'bg-cyan-500/10 border-cyan-500 text-cyan-300 shadow-lg shadow-cyan-500/10'
-                          : isDone
-                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
-                          : 'bg-slate-900/50 border-slate-800 text-slate-500'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5 mb-1.5" />
-                      <span className="font-semibold">Step {s.step}</span>
-                      <span className="text-[10px] opacity-80">{s.label}</span>
-                    </div>
+                    <React.Fragment key={s.step}>
+                      {idx > 0 && (
+                        <div className={`step-connector ${isDone ? 'completed' : ''}`} />
+                      )}
+                      <Tooltip text={`Step ${s.step}: ${s.label}`}>
+                        <div
+                          className={`p-3 rounded-xl border flex flex-col items-center transition-all min-w-[72px] ${
+                            isActive
+                              ? 'bg-cyan-500/10 border-cyan-500 text-cyan-300 shadow-lg shadow-cyan-500/10'
+                              : isDone
+                              ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
+                              : 'bg-slate-900/50 border-slate-800 text-slate-500'
+                          }`}
+                        >
+                          {isDone ? (
+                            <CheckCircle className="h-5 w-5 mb-1.5 text-emerald-400" />
+                          ) : (
+                            <Icon className="h-5 w-5 mb-1.5" />
+                          )}
+                          <span className="font-semibold">Step {s.step}</span>
+                          <span className="text-[10px] opacity-80 hidden sm:block">{s.label}</span>
+                        </div>
+                      </Tooltip>
+                    </React.Fragment>
                   );
                 })}
               </div>
@@ -728,7 +1054,7 @@ export default function App() {
 
             {/* Error banner if any */}
             {voterError && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center space-x-3">
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center space-x-3 animate-slide-up" role="alert">
                 <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0" />
                 <div>
                   <strong className="font-semibold">Verification Alert: </strong>
@@ -739,7 +1065,7 @@ export default function App() {
 
             {/* STEP 1: IDENTITY AUTH & ELIGIBILITY CHECK */}
             {voterStep === 1 && (
-              <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <div className="glass-panel rounded-2xl p-6 space-y-6 animate-scale-in">
                 <div className="flex items-center space-x-3 border-b border-slate-800 pb-4">
                   <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
                     <UserCheck className="h-6 w-6" />
@@ -755,32 +1081,36 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label htmlFor="voter-identifier" className="block text-xs font-semibold text-slate-300 mb-1">
                         Member Identifier ({currentElection?.eligibilityConfig.provider})
                       </label>
                       <input
+                        id="voter-identifier"
                         type="text"
                         value={voterIdentifier}
                         onChange={(e) => setVoterIdentifier(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 font-mono"
                         placeholder="e.g. alice.smith@college.edu or wallet address"
+                        aria-describedby="voter-id-hint"
                       />
-                      <p className="text-[11px] text-slate-500 mt-1">
+                      <p id="voter-id-hint" className="text-[11px] text-slate-500 mt-1">
                         Demo Hints: <code className="text-cyan-400">alice.smith@college.edu</code>, <code className="text-cyan-400">STU1001</code>, or wallet <code className="text-cyan-400">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</code>
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label htmlFor="voter-secret" className="block text-xs font-semibold text-slate-300 mb-1">
                         Private Voter Secret (Kept in Local Wallet)
                       </label>
                       <input
+                        id="voter-secret"
                         type="password"
                         value={voterSecret}
                         onChange={(e) => setVoterSecret(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 font-mono"
+                        aria-describedby="voter-secret-hint"
                       />
-                      <p className="text-[11px] text-slate-500 mt-1">Used locally to construct your ZK Nullifier commitment hash.</p>
+                      <p id="voter-secret-hint" className="text-[11px] text-slate-500 mt-1">Used locally to construct your ZK Nullifier commitment hash.</p>
                     </div>
 
                     <button
@@ -798,18 +1128,22 @@ export default function App() {
                       <Shield className="h-4 w-4 text-cyan-400" />
                       <span>Privacy Architecture Guarantee</span>
                     </h4>
-                    <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
+                    <ul className="text-xs text-slate-300 space-y-2 leading-relaxed" role="list">
                       <li className="flex items-start space-x-2">
-                        <span className="text-cyan-400 font-bold">•</span>
+                        <span className="text-cyan-400 font-bold mt-0.5">•</span>
                         <span>Your identity remains strictly with the organization adapter.</span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <span className="text-cyan-400 font-bold">•</span>
+                        <span className="text-cyan-400 font-bold mt-0.5">•</span>
                         <span>No institutional email, student ID, or wallet is written to the blockchain.</span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <span className="text-cyan-400 font-bold">•</span>
+                        <span className="text-cyan-400 font-bold mt-0.5">•</span>
                         <span>Only a cryptographically derived hash commitment will be passed to step 2.</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-emerald-400 font-bold mt-0.5">✓</span>
+                        <span>End-to-end verifiable — zero trust assumptions required.</span>
                       </li>
                     </ul>
                   </div>
@@ -819,7 +1153,7 @@ export default function App() {
 
             {/* STEP 2: ISSUE VERIFIABLE CREDENTIAL */}
             {voterStep === 2 && eligibilityResult && (
-              <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <div className="glass-panel rounded-2xl p-6 space-y-6 animate-scale-in">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
@@ -866,7 +1200,7 @@ export default function App() {
 
             {/* STEP 3: ZK PROOF & NULLIFIER */}
             {voterStep === 3 && credential && (
-              <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <div className="glass-panel rounded-2xl p-6 space-y-6 animate-scale-in">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
@@ -921,7 +1255,7 @@ export default function App() {
 
             {/* STEP 4: ENCRYPTED BALLOT CASTING */}
             {voterStep === 4 && zkProof && currentElection && (
-              <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <div className="glass-panel rounded-2xl p-6 space-y-6 animate-scale-in">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
@@ -942,7 +1276,7 @@ export default function App() {
                 {/* ZK Nullifier Header */}
                 <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 font-mono text-xs flex items-center justify-between">
                   <span className="text-slate-400">Generated Nullifier Hash:</span>
-                  <span className="text-cyan-400 font-bold">{zkProof.publicInputs.nullifierHash}</span>
+                  <span className="text-cyan-400 font-bold truncate max-w-xs">{zkProof.publicInputs.nullifierHash}</span>
                 </div>
 
                 <div className="space-y-4">
@@ -950,14 +1284,14 @@ export default function App() {
                     Choose Candidate / Ballot Option:
                   </label>
 
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-3" role="radiogroup" aria-label="Candidate selection">
                     {currentElection.candidates.map((cand) => (
                       <label
                         key={cand.id}
                         onClick={() => setSelectedCandidate(cand.id)}
-                        className={`p-4 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
+                        className={`candidate-card p-4 rounded-xl border flex items-center justify-between transition-all ${
                           selectedCandidate === cand.id
-                            ? 'bg-cyan-500/10 border-cyan-500 text-cyan-200 shadow-md shadow-cyan-500/10'
+                            ? 'bg-cyan-500/10 border-cyan-500 text-cyan-200 shadow-md shadow-cyan-500/10 selected'
                             : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
                         }`}
                       >
@@ -968,6 +1302,7 @@ export default function App() {
                             checked={selectedCandidate === cand.id}
                             onChange={() => setSelectedCandidate(cand.id)}
                             className="h-4 w-4 text-cyan-500 focus:ring-cyan-400"
+                            aria-label={cand.label}
                           />
                           <div>
                             <div className="font-bold text-sm">{cand.label}</div>
@@ -993,7 +1328,7 @@ export default function App() {
 
             {/* STEP 5: RECEIPT & DOUBLE VOTE TEST */}
             {voterStep === 5 && voteReceipt && (
-              <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <div className="glass-panel rounded-2xl p-6 space-y-6 animate-scale-in">
                 <div className="flex items-center space-x-3 border-b border-slate-800 pb-4">
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                     <FileCheck className="h-6 w-6" />
@@ -1054,7 +1389,7 @@ export default function App() {
                       setZkProof(null);
                       setVoteReceipt(null);
                     }}
-                    className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                    className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all"
                   >
                     Start New Voter Session
                   </button>
@@ -1064,15 +1399,15 @@ export default function App() {
           </div>
         )}
 
-        {/* -------------------- ADMIN DASHBOARD TAB -------------------- */}
+        {/* ════════════════════════ ADMIN DASHBOARD ════════════════════════ */}
         {activeTab === 'admin' && (
-          <div className="space-y-8">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
             {/* Admin Authentication Card */}
             <div className="glass-panel rounded-2xl p-6 border-indigo-500/20 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
                   <Shield className="h-5 w-5 text-indigo-400" />
-                  <h3 className="font-bold text-slate-100">Administrator Access & Authorization</h3>
+                  <h2 className="font-bold text-slate-100">Administrator Access & Authorization</h2>
                 </div>
                 {adminToken ? (
                   <div className="flex items-center space-x-3">
@@ -1095,14 +1430,14 @@ export default function App() {
               </div>
 
               {adminError && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center space-x-2">
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center space-x-2" role="alert">
                   <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
                   <span>{adminError}</span>
                 </div>
               )}
 
               {adminSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2" role="status">
                   <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
                   <span>{adminSuccess}</span>
                 </div>
@@ -1111,8 +1446,9 @@ export default function App() {
               {!adminToken ? (
                 <form onSubmit={handleAdminLogin} className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs items-end">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Username</label>
+                    <label htmlFor="admin-user" className="block text-slate-400 font-semibold mb-1">Username</label>
                     <input
+                      id="admin-user"
                       type="text"
                       value={adminUsername}
                       onChange={(e) => setAdminUsername(e.target.value)}
@@ -1121,8 +1457,9 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Password</label>
+                    <label htmlFor="admin-pass" className="block text-slate-400 font-semibold mb-1">Password</label>
                     <input
+                      id="admin-pass"
                       type="password"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
@@ -1169,8 +1506,9 @@ export default function App() {
 
                 <form onSubmit={handleCreateOrg} className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Organization Name</label>
+                    <label htmlFor="org-name" className="block text-slate-400 font-semibold mb-1">Organization Name</label>
                     <input
+                      id="org-name"
                       type="text"
                       value={newOrgName}
                       onChange={(e) => setNewOrgName(e.target.value)}
@@ -1180,8 +1518,9 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Type</label>
+                    <label htmlFor="org-type" className="block text-slate-400 font-semibold mb-1">Type</label>
                     <select
+                      id="org-type"
                       value={newOrgType}
                       onChange={(e) => setNewOrgType(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none"
@@ -1193,8 +1532,9 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Description</label>
+                    <label htmlFor="org-desc" className="block text-slate-400 font-semibold mb-1">Description</label>
                     <input
+                      id="org-desc"
                       type="text"
                       value={newOrgDesc}
                       onChange={(e) => setNewOrgDesc(e.target.value)}
@@ -1221,8 +1561,9 @@ export default function App() {
 
                 <form onSubmit={handleCreateElection} className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Target Organization</label>
+                    <label htmlFor="election-org" className="block text-slate-400 font-semibold mb-1">Target Organization</label>
                     <select
+                      id="election-org"
                       value={newElectionOrgId}
                       onChange={(e) => setNewElectionOrgId(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none"
@@ -1237,8 +1578,9 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Election Title</label>
+                    <label htmlFor="election-title" className="block text-slate-400 font-semibold mb-1">Election Title</label>
                     <input
+                      id="election-title"
                       type="text"
                       value={newElectionTitle}
                       onChange={(e) => setNewElectionTitle(e.target.value)}
@@ -1249,8 +1591,9 @@ export default function App() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-slate-400 font-semibold mb-1">Eligibility Provider</label>
+                      <label htmlFor="election-provider" className="block text-slate-400 font-semibold mb-1">Eligibility Provider</label>
                       <select
+                        id="election-provider"
                         value={newElectionProvider}
                         onChange={(e) => setNewElectionProvider(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100 focus:outline-none"
@@ -1263,8 +1606,9 @@ export default function App() {
 
                     {newElectionProvider === 'COLLEGE_EMAIL' && (
                       <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Allowed Domain</label>
+                        <label htmlFor="election-domain" className="block text-slate-400 font-semibold mb-1">Allowed Domain</label>
                         <input
+                          id="election-domain"
                           type="text"
                           value={newElectionDomain}
                           onChange={(e) => setNewElectionDomain(e.target.value)}
@@ -1275,8 +1619,9 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Candidates / Options (One per line)</label>
+                    <label htmlFor="election-candidates" className="block text-slate-400 font-semibold mb-1">Candidates / Options (One per line)</label>
                     <textarea
+                      id="election-candidates"
                       rows={3}
                       value={candidateInputs}
                       onChange={(e) => setCandidateInputs(e.target.value)}
@@ -1303,7 +1648,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {elections.map((e) => (
-                  <div key={e.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs">
+                  <div key={e.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs glass-panel-interactive">
                     <div className="flex items-center justify-between">
                       <strong className="text-slate-100 text-sm">{e.title}</strong>
                       <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono">{e.status}</span>
@@ -1334,35 +1679,52 @@ export default function App() {
           </div>
         )}
 
-        {/* -------------------- PUBLIC AUDIT EXPLORER TAB -------------------- */}
+        {/* ════════════════════════ PUBLIC AUDIT EXPLORER ════════════════════════ */}
         {activeTab === 'audit' && (
-          <div className="space-y-6">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
+            {/* Election Selector */}
+            <div className="glass-panel rounded-2xl p-4 flex items-center space-x-3 border-cyan-500/20">
+              <Building className="h-5 w-5 text-cyan-400" />
+              <select
+                value={selectedElectionId}
+                onChange={(e) => setSelectedElectionId(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cyan-500 font-semibold flex-1"
+                aria-label="Select election to audit"
+              >
+                {elections.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    [{e.status}] {e.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="glass-panel rounded-2xl p-6 space-y-4">
               <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
                 <Search className="h-5 w-5 text-cyan-400" />
-                <h3 className="font-bold text-slate-100">Public Election Verifier & Ledger Audit</h3>
+                <h2 className="font-bold text-slate-100">Public Election Verifier & Ledger Audit</h2>
               </div>
 
               {auditData ? (
                 <div className="space-y-6">
                   {/* Summary Header */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 glass-panel-interactive">
                       <span className="text-slate-400">Total Ballots Cast:</span>
                       <div className="text-2xl font-bold text-cyan-400 mt-1">{auditData.totalVotes}</div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 glass-panel-interactive">
                       <span className="text-slate-400">Nullifiers Enforced:</span>
                       <div className="text-2xl font-bold text-purple-400 mt-1">{auditData.nullifiersCount}</div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 glass-panel-interactive">
                       <span className="text-slate-400">Election Status:</span>
                       <div className="text-lg font-bold text-emerald-400 mt-2">{auditData.election?.status}</div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 glass-panel-interactive">
                       <span className="text-slate-400">ZK Tally Verified:</span>
                       <div className="text-lg font-bold text-emerald-400 mt-2">
                         {auditData.tally ? 'VALID ✅' : 'PENDING ⏳'}
@@ -1370,24 +1732,34 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Final Tally Card */}
+                  {/* Final Tally Card with Progress Bars */}
                   {auditData.tally && (
-                    <div className="p-5 rounded-2xl bg-slate-900 border border-cyan-500/30 space-y-3">
+                    <div className="p-5 rounded-2xl bg-slate-900 border border-cyan-500/30 space-y-4">
                       <h4 className="text-sm font-bold text-cyan-300 flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4 text-emerald-400" />
                         <span>Verified Final Election Tally</span>
                       </h4>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {Object.entries(auditData.tally.candidateScores).map(([candId, count]) => {
                           const candObj = auditData.election?.candidates.find((c: any) => c.id === candId);
                           const label = candObj ? candObj.label : candId;
+                          const total = Object.values(auditData.tally.candidateScores).reduce(
+                            (sum: number, v: any) => sum + v, 0
+                          ) as number;
+                          const pct = total > 0 ? ((count as number) / total) * 100 : 0;
+
                           return (
-                            <div key={candId} className="flex items-center justify-between text-xs font-mono">
-                              <span className="text-slate-200">{label}</span>
-                              <span className="px-3 py-1 rounded bg-slate-800 text-cyan-400 font-bold">
-                                {count as number} Votes
-                              </span>
+                            <div key={candId} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs font-mono">
+                                <span className="text-slate-200">{label}</span>
+                                <span className="px-3 py-1 rounded bg-slate-800 text-cyan-400 font-bold">
+                                  {count as number} Votes ({pct.toFixed(1)}%)
+                                </span>
+                              </div>
+                              <div className="tally-bar">
+                                <div className="tally-bar-fill" style={{ width: `${pct}%` }} />
+                              </div>
                             </div>
                           );
                         })}
@@ -1409,7 +1781,7 @@ export default function App() {
                       {ledgerTxs.map((tx, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono flex items-center justify-between"
+                          className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono flex items-center justify-between glass-panel-interactive"
                         >
                           <div className="flex items-center space-x-3">
                             <span className="px-2 py-0.5 rounded bg-slate-800 text-purple-400">
@@ -1430,13 +1802,13 @@ export default function App() {
           </div>
         )}
 
-        {/* -------------------- API SANDBOX TAB -------------------- */}
+        {/* ════════════════════════ API SANDBOX ════════════════════════ */}
         {activeTab === 'api' && (
-          <div className="space-y-6">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
             <div className="glass-panel rounded-2xl p-6 space-y-4">
               <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
                 <Terminal className="h-5 w-5 text-cyan-400" />
-                <h3 className="font-bold text-slate-100">REST API & MCP Endpoint Tester</h3>
+                <h2 className="font-bold text-slate-100">REST API & MCP Endpoint Tester</h2>
               </div>
 
               <div className="flex items-center space-x-2 text-xs">
@@ -1444,6 +1816,7 @@ export default function App() {
                   value={sandboxEndpoint}
                   onChange={(e) => setSandboxEndpoint(e.target.value)}
                   className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none font-mono flex-1"
+                  aria-label="Select API endpoint"
                 >
                   <option value="/api/organizations">GET /api/organizations</option>
                   <option value="/api/elections">GET /api/elections</option>
@@ -1471,6 +1844,74 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* ──────── FOOTER ──────── */}
+      <footer className="border-t border-slate-800 bg-slate-950/80 backdrop-blur-sm" role="contentinfo">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-500 p-0.5 flex items-center justify-center">
+                  <div className="h-full w-full bg-slate-950 rounded-[6px] flex items-center justify-center">
+                    <Shield className="h-4 w-4 text-cyan-400" />
+                  </div>
+                </div>
+                <span className="font-extrabold gradient-text">DOJO</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-xs">
+                Privacy-preserving voting infrastructure powered by zero-knowledge proofs, verifiable credentials, and immutable blockchain technology.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Platform</h4>
+              <div className="space-y-2">
+                <button onClick={navigateToVoter} className="footer-link block">Cast Your Vote</button>
+                <button onClick={navigateToAdmin} className="footer-link block">Admin Dashboard</button>
+                <button onClick={navigateToAudit} className="footer-link block">Public Audit Explorer</button>
+                <button onClick={() => setActiveTab('api')} className="footer-link block">API Documentation</button>
+              </div>
+            </div>
+
+            {/* Technology */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Technology</h4>
+              <div className="space-y-2 text-xs text-slate-500">
+                <div className="flex items-center space-x-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
+                  <span>Zero-Knowledge Proofs (ZK-SNARKs)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
+                  <span>Verifiable Credentials (DID)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  <span>MST Blockchain Ledger</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-pink-500"></span>
+                  <span>Nullifier Anti-Fraud Engine</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600">
+            <span>© {new Date().getFullYear()} DOJO Privacy Infrastructure. All rights reserved.</span>
+            <div className="flex items-center space-x-1">
+              <span>Built with</span>
+              <Heart className="h-3 w-3 text-pink-500" />
+              <span>for privacy.</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Back to top */}
+      <BackToTop />
     </div>
   );
 }

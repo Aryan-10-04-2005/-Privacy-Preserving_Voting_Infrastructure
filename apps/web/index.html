@@ -1,14 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dojo — Privacy-Preserving Voting Infrastructure</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary SEO Meta Tags -->
+    <title>DOJO — Privacy-Preserving Zero-Knowledge Voting Platform | Secure Anonymous Elections</title>
+    <meta name="description" content="DOJO is a cutting-edge privacy-preserving voting platform using zero-knowledge proofs, verifiable credentials, and blockchain technology. Conduct secure, anonymous, and verifiable elections for colleges, DAOs, and enterprises." />
+    <meta name="keywords" content="zero-knowledge voting, privacy-preserving elections, blockchain voting, anonymous voting, ZK proofs, verifiable credentials, decentralized governance, secure elections, college voting, DAO voting, DOJO voting platform" />
+    <meta name="author" content="DOJO Privacy Infrastructure" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://dojo-voting.io" />
+
+    <!-- Theme & Color -->
+    <meta name="theme-color" content="#030712" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="msapplication-TileColor" content="#030712" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dojo-voting.io" />
+    <meta property="og:title" content="DOJO — Privacy-Preserving Zero-Knowledge Voting Platform" />
+    <meta property="og:description" content="Conduct secure, anonymous, and verifiable elections using zero-knowledge proofs and blockchain technology. Built for colleges, DAOs, and enterprises." />
+    <meta property="og:site_name" content="DOJO Voting Platform" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DOJO — Privacy-Preserving Zero-Knowledge Voting Platform" />
+    <meta name="twitter:description" content="Secure, anonymous elections powered by ZK proofs and blockchain. No voter identity ever exposed." />
+
+    <!-- Preconnect & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "DOJO — Privacy-Preserving Voting Platform",
+      "url": "https://dojo-voting.io",
+      "description": "A cutting-edge privacy-preserving voting platform using zero-knowledge proofs, verifiable credentials, and blockchain technology for secure anonymous elections.",
+      "applicationCategory": "GovernanceTool",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Zero-Knowledge Proof Voting",
+        "Verifiable Credential Issuance",
+        "Blockchain Immutable Ledger",
+        "Double-Vote Prevention via Nullifiers",
+        "End-to-End Encrypted Ballots",
+        "Public Audit Explorer"
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "DOJO Privacy Infrastructure"
+      }
+    }
+    </script>
+
+    <!-- Inline critical styles to prevent FOUC -->
+    <style>
+      body { background-color: #030712; margin: 0; }
+      #root { min-height: 100vh; }
+    </style>
   </head>
   <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-slate-950">
+    <!-- Skip to main content link for accessibility / screen readers -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

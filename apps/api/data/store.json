@@ -90,11 +90,49 @@
       "createdAt": 1792837394941
     }
   ],
-  "credentials": [],
-  "nullifiers": [],
-  "votes": [],
+  "credentials": [
+    {
+      "id": "did:dojo:vc:f5163723ed905201",
+      "issuer": "did:dojo:platform-authority",
+      "subjectHash": "d0e8d10b6e3cc032565a1dc6f5ea5eb43fc969d3a348adbf16bc5825d1762c83",
+      "organizationId": "org-college-1",
+      "credentialType": "ELIGIBLE_VOTER_CREDENTIAL",
+      "commitmentHash": "47d42d07dd5934fcbab5ea6b37247ed5c7d476832b542cdbf7317125c0e3107f",
+      "issuedAt": 1793636106887,
+      "expiresAt": 1796228106887,
+      "signature": "087d83cb871540f3c4f3dec716fab36a8a2f3475282dd7bfe7c3ae0590449648"
+    }
+  ],
+  "nullifiers": [
+    {
+      "nullifierHash": "c32262878bbe99388a5515a0cc78daac360dea3f46254bc8dd14257a98da1ad6",
+      "electionId": "elect-college-2026",
+      "usedAt": 1793636128984,
+      "blockNumber": 104286,
+      "txHash": "0xmst_eb7279e386b0ffcd288bf290060768b52143cd2d4dc4f4c011718f1b7541dd03"
+    }
+  ],
+  "votes": [
+    {
+      "id": "vote-ref-7ce04bdbadb0",
+      "electionId": "elect-college-2026",
+      "nullifierHash": "c32262878bbe99388a5515a0cc78daac360dea3f46254bc8dd14257a98da1ad6",
+      "encryptedBallot": "enc_ballot_12ada3d826ce8cfde80e8cca52c3fbb8",
+      "txHash": "0xmst_eb7279e386b0ffcd288bf290060768b52143cd2d4dc4f4c011718f1b7541dd03",
+      "blockNumber": 104286,
+      "timestamp": 1793636128984
+    }
+  ],
   "tallies": {},
-  "blockchainTxs": [],
+  "blockchainTxs": [
+    {
+      "txHash": "0xmst_eb7279e386b0ffcd288bf290060768b52143cd2d4dc4f4c011718f1b7541dd03",
+      "blockNumber": 104286,
+      "eventType": "VOTE_CAST_EVENT",
+      "payloadHash": "ccdae337c04f0a8938cca708f7da4810156d08cc2b4f9cc251487bc0072c65b8",
+      "timestamp": 1793636128983
+    }
+  ],
   "auditLogs": [
     {
       "id": "audit-seed-1",
@@ -109,6 +147,29 @@
       "type": "ELECTION_CREATED",
       "details": "DAO Election created with wallet allowlist requirement.",
       "timestamp": 1792837394941
+    },
+    {
+      "id": "audit-cred-1793636106888",
+      "electionId": "",
+      "type": "CREDENTIAL_ISSUED",
+      "details": "Issued Verifiable Credential [did:dojo:vc:f5163723ed905201] for org [org-college-1] with commitment hash [47d42d07dd...]",
+      "timestamp": 1793636106887
+    },
+    {
+      "id": "audit-null-1793636128984",
+      "electionId": "elect-college-2026",
+      "type": "NULLIFIER_REGISTERED",
+      "details": "Nullifier registered: c32262878bbe...",
+      "timestamp": 1793636128984,
+      "txHash": "0xmst_eb7279e386b0ffcd288bf290060768b52143cd2d4dc4f4c011718f1b7541dd03"
+    },
+    {
+      "id": "audit-vote-1793636128985",
+      "electionId": "elect-college-2026",
+      "type": "VOTE_ACCEPTED",
+      "details": "Anonymous vote successfully accepted & committed to MST Blockchain [Tx: 0xmst_eb7279e3...]",
+      "timestamp": 1793636128985,
+      "txHash": "0xmst_eb7279e386b0ffcd288bf290060768b52143cd2d4dc4f4c011718f1b7541dd03"
     }
   ]
 }
